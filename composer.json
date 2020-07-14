@@ -1,0 +1,24 @@
+{
+    "name": "dev-lancer/mc-pack",
+    "description": "Minecraft server pack php",
+    "type": "library",
+    "license": "MIT",
+    "minimum-stability": "stable",
+    "require": {
+        "ext-php": "<=7.4.*",
+        "xpaw/php-minecraft-query": "^4.0",
+        "thedudeguy/rcon": "^1.0",
+        "phpseclib/phpseclib": "^2.0"
+    },
+    "authors": [
+        {
+            "name": "Jakub Gniecki",
+            "email": "kubuspl@onet.eu"
+        }
+    ],
+    "autoload": {
+        "psr-4": {
+            "DevLancer\\MCPack\\": "src/"
+        }
+    }
+}
