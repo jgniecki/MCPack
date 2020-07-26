@@ -83,6 +83,16 @@ class ServerManagerSell extends AbstractServerManager
         return $this->terminal($command);
     }
 
+    public function kill(): bool
+    {
+        if (!$this->isRunning() || !$this->getPid())
+            return false;
+
+        $command = "kill -9 " . $this->getPid();
+
+        return $this->terminal($command);
+    }
+
     /**
      * @return int|null
      */
