@@ -11,17 +11,18 @@ namespace DevLancer\MCPack;
 
 
 use xPaw\MinecraftQueryException;
+use xPaw\MinecraftQuery;
 
 /**
- * Class MinecraftQuery
+ * Class Query
  * @package DevLancer\MCPack
  */
-class MinecraftQuery
+class Query
 {
     /**
-     * @var \xPaw\MinecraftQuery
+     * @var MinecraftQuery
      */
-    private \xPaw\MinecraftQuery $query;
+    private MinecraftQuery $query;
 
     /**
      * @var string
@@ -39,16 +40,16 @@ class MinecraftQuery
     private int $timeout;
 
     /**
-     * MinecraftQuery constructor.
+     * Query constructor.
      * @param string $host
      * @param int $port
      * @param int $timeout
-     * @param \xPaw\MinecraftQuery|null $query
+     * @param MinecraftQuery|null $query
      */
-    public function __construct(string $host, int $port = 25565, int $timeout = 3, ?\xPaw\MinecraftQuery $query = null)
+    public function __construct(string $host, int $port = 25565, int $timeout = 3, ?MinecraftQuery $query = null)
     {
         if (!$query)
-            $query = new \xPaw\MinecraftQuery();
+            $query = new MinecraftQuery();
 
         $this->query = $query;
         $this->host = $host;

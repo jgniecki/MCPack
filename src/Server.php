@@ -20,9 +20,9 @@ use Thedudeguy\Rcon;
 class Server
 {
     /**
-     * @var MinecraftQuery
+     * @var Query
      */
-    private MinecraftQuery $query;
+    private Query $query;
 
     /**
      * @var Rcon
@@ -40,16 +40,23 @@ class Server
     private string $path = "";
 
     /**
+     * @var int
+     */
+    private int $port;
+
+    /**
      * Server constructor.
-     * @param MinecraftQuery $query
+     * @param Query $query
      * @param Rcon $rcon
+     * @param int $serverPort
      * @param SFTP|null $sftp
      * @param string|null $path
      */
-    public function __construct(MinecraftQuery $query, Rcon $rcon, ?SFTP $sftp = null, ?string $path = null)
+    public function __construct(Query $query, Rcon $rcon, int $serverPort = 25565, ?SFTP $sftp = null, ?string $path = null)
     {
         $this->query = $query;
         $this->rcon = $rcon;
+        $this->port = $serverPort;
 
         if($sftp)
             $this->sftp = $sftp;
@@ -59,9 +66,25 @@ class Server
     }
 
     /**
-     * @return MinecraftQuery
+     * @return int
      */
-    public function getQuery(): MinecraftQuery
+    public function getPort(): int
+    {
+        return $this->port;
+    }
+
+    /**
+     * @param int $port
+     */
+    public function setPort(int $port): void
+    {
+        $this->port = $port;
+    }
+
+    /**
+     * @return Query
+     */
+    public function getQuery(): Query
     {
         return $this->query;
     }

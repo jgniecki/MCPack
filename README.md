@@ -28,17 +28,17 @@ It enables downloading basic server information and sending commands.
 <?php
     require 'vendor/autoload.php';
     
-    use DevLancer\MCPack\MinecraftQuery;
+    use DevLancer\MCPack\Query;
     use DevLancer\MCPack\ServerManager;
     use DevLancer\MCPack\Server;
     use Thedudeguy\Rcon;
 
-    $query = new MinecraftQuery("some.minecraftserver.com", 25565);
+    $query = new Query("some.minecraftserver.com", 25565);
     $rcon = new Rcon("some.minecraftserver.com", 25575, "pass", 3);
     $server = new Server($query, $rcon);
     $server_manager = new ServerManager($server);
 
-    $players = \count($server_manager->getPlayers());
+    $players = count($server_manager->getPlayers());
     echo $players . "/" . $server_manager->getMaxPlayer();
 ```
 
@@ -50,7 +50,7 @@ It enables downloading basic server information, sending commands and server man
 <?php
     require 'vendor/autoload.php';
     
-    use DevLancer\MCPack\MinecraftQuery;
+    use DevLancer\MCPack\Query;
     use DevLancer\MCPack\ServerManagerSell;
     use DevLancer\MCPack\Server;
     use phpseclib\Net\SFTP;
@@ -64,13 +64,13 @@ It enables downloading basic server information, sending commands and server man
     $sftp->setTimeout(3);
 
     $path = "path/to/minecraft/server.jar";
-    $query = new MinecraftQuery($host, 25565);
+    $query = new Query($host, 25565);
     $rcon = new Rcon($host, 25575, "pass", 3);
-    $server = new Server($query, $rcon, $sftp, $path);
+    $server = new Server($query, $rcon, 25565, $sftp, $path);
     $server_manager = new ServerManagerSell($server);
 
-    if(!$server_manager->isRunning(25565)) {
-        if ($server_manager->run(1024, 25565))
+    if(!$server_manager->isRunning()) {
+        if ($server_manager->run(1024))
             echo "server started";
     }
 ```
