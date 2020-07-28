@@ -26,6 +26,19 @@ class ServerManagerSell extends AbstractServerManager
     private ?int $pid = null;
 
     /**
+     * ServerManagerSell constructor.
+     * @param Server $server
+     * @throws \Exception
+     */
+    public function __construct(Server $server)
+    {
+        parent::__construct($server);
+
+        if (!$this->server->hasSftp())
+            throw new \Exception("The \$sftp parameter for Server.php must be provided"); 
+    }
+
+    /**
      * @param int $memory
      * @return bool
      *
@@ -34,17 +47,24 @@ class ServerManagerSell extends AbstractServerManager
     public function run(int $memory = 512): bool
     {
         $port = $this->server->getPort();
-        if ($this->isRunning())
+        if ($this->isRunning()) {
+            $this->notice("Server mc<strong>$port</strong> is running");
             return false;
+        }
 
-        if (!$this->server->hasPath())
+        if (!$this->server->hasPath()) {
+            $this->notice("There is no path to the server");
             return false;
+        }
 
         $path = explode("/", $this->server->getPath());
         $name = end($path);
 
-        if (strpos($name, ".jar") === false)
+        if (strpos($name, ".jar") === false) {
+            $this->notice("The path does not lead to a server");
+
             return false;
+        }
 
         unset($path[array_key_last($path)]);
         $path = implode("/", $path);
@@ -71,22 +91,30 @@ class ServerManagerSell extends AbstractServerManager
      */
     public function stop(): bool
     {
-        if (!$this->isRunning())
+        $port = $this->server->getPort();
+
+        if (!$this->isRunning()) {
+            $this->notice("Server mc<strong>$port</strong> isn't running");
             return false;
+        }
 
         if (!$this->sendCommand("stop"))
             return false;
 
-        $port = $this->server->getPort();
         $command = "screen -X -S mc" . $port . " quit";
 
         return $this->terminal($command);
     }
 
+    /**
+     * @return bool
+     */
     public function kill(): bool
     {
-        if (!$this->isRunning() || !$this->getPid())
+        if (!$this->isRunning() || !$this->getPid()) {
+            $this->notice("Server mc<strong>" . $this->server->getPort() . "</strong> isn't running");
             return false;
+        }
 
         $command = "kill -9 " . $this->getPid();
 
@@ -98,9 +126,6 @@ class ServerManagerSell extends AbstractServerManager
      */
     public function getPid(): ?int
     {
-        if (!$this->isRunning())
-            return null;
-
         if (!$this->pid)
             $this->setPid();
 
@@ -108,19 +133,44 @@ class ServerManagerSell extends AbstractServerManager
 
     }
 
+    /**
+     *
+     */
     private function setPid(): void
     {
+        $port = $this->server->getPort();
+        if (!$this->isRunning()) {
+            $this->notice("Server mc<strong>$port</strong> isn't running");
+            return;
+        }
+
         $command = "screen -ls";
         if (!$this->terminal($command))
             return;
 
-        $port = $this->server->getPort();
         if (!preg_match('/([0-9]{1,}).mc' . $port . '/', $this->responseTerminal, $pid))
             return;
 
         $pid = (int) $pid[1];
 
-        $this->pid = ++$pid;
+        $command = "ps -h";
+        if (!$this->terminal($command))
+            return;
+
+        $process = explode("\n", $this->responseTerminal);
+        $current_pid = null;
+        foreach ($process as $id => $value) {
+            if (strpos($value, "java") === false)
+                continue;
+
+            preg_match('/[0-9]{1,}/', $value, $pid_ps);
+            $pid_ps = $pid_ps[0];
+
+            if (!$current_pid || $pid_ps < $current_pid)
+                $current_pid = $pid_ps;
+        }
+
+        $this->pid = (int) $current_pid;
     }
 
     /**
@@ -141,16 +191,14 @@ class ServerManagerSell extends AbstractServerManager
 
         $process = explode("\n", $this->responseTerminal);
         $id = array_search($pid, $process);
-        $process = explode(" ", $process[$id]);
+        preg_match_all('/[a-zA-Z0-9,.:_-]{1,}/', $process[$id], $process);
 
-        $cpu = $process[14];
-        $memory = $process[15];
-        $time = $process[17];
+        $cpu = $process[0][8];
+        $memory = $process[0][9];
 
         return [
             'memory' => $memory,
-            'cpu' => $cpu,
-            'time' => $time
+            'cpu' => $cpu
         ];
     }
 
@@ -160,12 +208,11 @@ class ServerManagerSell extends AbstractServerManager
      */
     private function terminal(string $command): bool
     {
-        if (!$this->server->hasSftp())
-            return false;
-
         $sftp = $this->server->getSftp();
-        if(!$sftp->isConnected())
+        if(!$sftp->isConnected()) {
+            $this->notice("Failed to connect to SFTP");
             return false;
+        }
 
         $this->responseTerminal =  $sftp->exec($command);
         return true;
@@ -176,6 +223,11 @@ class ServerManagerSell extends AbstractServerManager
      */
     public function getCpuUsage(): float
     {
+        if (!$this->isRunning()) {
+            $this->notice("Server mc<strong>" . $this->server->getPort() . "</strong> isn't running");
+            return 0.0;
+        }
+
         $cpu = $this->serverProcess()['cpu'];
         $cpu = str_replace(",", ".", $cpu);
 
@@ -187,6 +239,11 @@ class ServerManagerSell extends AbstractServerManager
      */
     public function getMemoryUsage()
     {
+        if (!$this->isRunning()) {
+            $this->notice("Server mc<strong>" . $this->server->getPort() . "</strong> isn't running");
+            return 0.0;
+        }
+
         $memory = $this->serverProcess()['memory'];
         $memory = str_replace(",", ".", $memory);
 
@@ -200,8 +257,14 @@ class ServerManagerSell extends AbstractServerManager
      */
     public function getMemory(): string
     {
+
+        if (!$this->isRunning()) {
+            $this->notice("Server mc<strong>" . $this->server->getPort() . "</strong> isn't running");
+            return "0M";
+        }
+
         $command = "ps -h -p" . $this->getPid();
-        if (!$this->terminal($command))
+        if(!$this->terminal($command))
             return "0M";
 
         preg_match('/Xmx([0-9]{1,}.)/i', $this->responseTerminal, $xmx);
@@ -216,11 +279,22 @@ class ServerManagerSell extends AbstractServerManager
      *
      * format hh:mm:ss
      */
-    public function getRunTime(): string
+    /*public function getRunTime(): string
     {
         $time = $this->serverProcess()['time'];
         $time = explode(".", $time)[0];
 
         return (string) $time;
+    }*/
+
+    /**
+     * @param string $message
+     */
+    private function notice(string $message): void
+    {
+        $array = debug_backtrace();
+        $caller = next($array);
+        trigger_error($message.' in <strong>'.$caller['function'].'</strong> called from <strong>'.$caller['file'].'</strong> on line <strong>'.$caller['line'].'</strong>'."\n<br />error handler");
+
     }
 }
