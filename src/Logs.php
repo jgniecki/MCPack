@@ -34,9 +34,9 @@ class Logs
     private ?string $pathCache = null;
 
     /**
-     * @var string|null
+     * @var array
      */
-    private ?string $logs = null;
+    private array $logs = [];
 
     /**
      * Logs constructor.
@@ -60,50 +60,60 @@ class Logs
     {
         $sftp = $this->sftp;
         if (!$sftp->file_exists($this->pathLogs)) {
-            $this->logs = "[Server] File $this->pathLogs not found.";
+            $this->logs = ["[Server] File $this->pathLogs not found."];
             return $this;
         }
 
         if ($this->pathCache) {
-            if ($sftp->filemtime($this->pathLogs) != \filemtime($this->pathCache))
+            if ($sftp->filemtime($this->pathLogs) != filemtime($this->pathCache))
                 $this->updateCache();
 
             return $this;
         }
 
-        $this->logs = (string) $sftp->get($this->pathLogs);
+        $this->logs = explode("\n", $sftp->get($this->pathLogs));
         return $this;
     }
 
-    public function updateCache(): void
+    /**
+     * @return $this
+     */
+    public function updateCache(): self
     {
         if (!$this->pathCache)
-            return;
+            return $this;
 
         $sftp = $this->sftp;
         $sftp->get($this->pathLogs, $this->pathCache);
+        return $this;
 
     }
 
+    /**
+     *
+     */
     private function loadCache(): void
     {
         if (!$this->pathCache)
             return;
 
-        if (!\file_exists($this->pathCache)) {
-            $this->logs = "[Cache] File $this->pathCache not found.";
+        if (!file_exists($this->pathCache)) {
+            $this->logs = ["[Cache] File $this->pathCache not found."];
             return;
         }
 
-        $this->logs = (string) \file_get_contents($this->pathCache);
+        $this->logs = explode("\n", file_get_contents($this->pathCache));
 
     }
 
     /**
      * @param bool $update
-     * @return string
+     * @param int $offset
+     * @param int $length
+     * @param bool $reverse
+     * @return array
      */
-    public function getLogs(bool $update = false): string
+    public function getLogs(bool $update = false, int $offset = 0, int $length = -1, bool $reverse = false): array
     {
         if ($update)
             $this->update();
@@ -111,6 +121,26 @@ class Logs
         if ($this->pathCache)
             $this->loadCache();
 
-        return (string) $this->logs;
+        $logs = $this->logs;
+        $line = count($logs);
+
+        if ($reverse)
+            $logs = array_reverse($logs);
+
+        for ($i = 0; $i < $offset; $i++)
+            unset($logs[$i]);
+
+        if ($logs === 0)
+            return [];
+
+        if ($length > -1) {
+            for ($i = $line; $i >= ($line - $length); $i--)
+                unset($logs[$i]);
+        }
+
+        if ($reverse)
+            $logs = array_reverse($logs);
+
+        return $logs;
     }
 }
