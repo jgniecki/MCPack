@@ -93,7 +93,7 @@ This class allows downloading logs from the server.
     $sftp->login($login, $password);
     $sftp->setTimeout(3);
 
-    $path = "path/to/minecraft/logs/lastest.log";
+    $path = "path/to/minecraft/logs/latest.log";
     $logs = new Logs($sftp, $path);
     echo $logs->getLogs(true);
 ```
