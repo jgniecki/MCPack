@@ -35,7 +35,7 @@ class ServerManagerSell extends AbstractServerManager
         parent::__construct($server);
 
         if (!$this->server->hasSftp())
-            throw new \Exception("The \$sftp parameter for Server.php must be provided"); 
+            throw new \Exception("The \$sftp parameter for Server.php must be provided");
     }
 
     /**
@@ -166,7 +166,7 @@ class ServerManagerSell extends AbstractServerManager
             preg_match('/[0-9]{1,}/', $value, $pid_ps);
             $pid_ps = $pid_ps[0];
 
-            if (!$current_pid || $pid_ps < $current_pid)
+            if (!$current_pid || ($pid_ps < $current_pid && $pid_ps <= $pid))
                 $current_pid = $pid_ps;
         }
 
