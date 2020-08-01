@@ -10,6 +10,7 @@
 namespace DevLancer\MCPack;
 
 
+use Exception;
 use phpseclib\Net\SFTP;
 
 /**
@@ -29,18 +30,18 @@ class Properties
      */
     public function __construct(string $properties)
     {
-        $this->properties = \explode("\n", $properties);
+        $this->properties = explode("\n", $properties);
     }
 
     /**
      * @param string $name
-     * @param $value
+     * @param mixed $value
      * @return self
      */
     public function setProperty(string $name, $value): self
     {
-        $property = \preg_grep('/' . $name . '/', $this->properties);
-        $key = \key($property);
+        $property = preg_grep('/' . $name . '/', $this->properties);
+        $key = key($property);
         $this->properties[$key] = $name . "=" . $value;
         return $this;
     }
@@ -51,7 +52,7 @@ class Properties
      */
     public function hasProperty(string $name):bool
     {
-        $property = \preg_grep('/' . $name . '/', $this->properties);
+        $property = preg_grep('/' . $name . '/', $this->properties);
         return $property != [];
     }
 
@@ -64,9 +65,9 @@ class Properties
         if (!$this->hasProperty($name))
             return null;
 
-        $property = \preg_grep('/' . $name . '/', $this->properties);
-        $key = \key($property);
-        return \trim(\explode("=", $property[$key])[1]);
+        $property = preg_grep('/' . $name . '/', $this->properties);
+        $key = key($property);
+        return trim(explode("=", $property[$key])[1]);
     }
 
     /**
@@ -77,14 +78,22 @@ class Properties
         return $this->properties;
     }
 
+
     /**
      * @param SFTP $sftp
      * @param string $path
      * @return static
+     * @throws Exception
      */
     public static function generate(SFTP $sftp, string $path): self
     {
-        $properties = $sftp->get($path); //todo jezeli plik nie istnieje zrob jakas akcje
+        if (!$sftp->isConnected())
+            throw new Exception("No SFTP connection");
+
+        if (!$sftp->file_exists($path))
+            throw new Exception("File $path does not exist");
+
+        $properties = $sftp->get($path);
         return new self($properties);
     }
 }
