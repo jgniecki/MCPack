@@ -74,14 +74,6 @@ class Server
     }
 
     /**
-     * @param int $port
-     */
-    public function setPort(int $port): void
-    {
-        $this->port = $port;
-    }
-
-    /**
      * @return Query
      */
     public function getQuery(): Query
