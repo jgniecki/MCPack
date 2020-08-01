@@ -114,7 +114,7 @@ This class allows downloading logs from the server.
     $sftp->login($login, $password);
     $sftp->setTimeout(3);
 
-    $properties = Properties::generate($sftp, "mc/server.properties");
+    $properties = Properties::generate($sftp, "path/to/minecraft/server.properties");
     $port = (int) $properties->getProperty("server-port");
     $query_port = (int) $properties->getProperty("query.port");
     $rcon_port = (int) $properties->getProperty("rcon.port");
