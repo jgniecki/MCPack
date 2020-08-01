@@ -98,5 +98,29 @@ This class allows downloading logs from the server.
     echo implode("<br />", $logs->getLogs(true));
 ```
 
+### Properties
+
+```php
+<?php
+    require 'vendor/autoload.php';
+    
+    use DevLancer\MCPack\Properties;
+    use phpseclib\Net\SFTP;
+
+    $host = "some.minecraftserver.com";
+    $login = "user";
+    $password = "password";
+    $sftp = new SFTP($host);
+    $sftp->login($login, $password);
+    $sftp->setTimeout(3);
+
+    $properties = Properties::generate($sftp, "mc/server.properties");
+    $port = (int) $properties->getProperty("server-port");
+    $query_port = (int) $properties->getProperty("query.port");
+    $rcon_port = (int) $properties->getProperty("rcon.port");
+    $rcon_pass = $properties->getProperty("rcon.password");
+
+```
+
 ## License
 [MIT](LICENSE)
