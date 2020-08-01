@@ -148,7 +148,7 @@ class ServerManagerSell extends AbstractServerManager
             return;
         }
 
-        $command = "screen -ls";
+        $command = "screen -ls mc" . $port;
         if (!$this->terminal($command))
             return;
 
@@ -276,15 +276,21 @@ class ServerManagerSell extends AbstractServerManager
     }
 
     /**
-     * @return string
-     *
-     * format hh:mm:ss
+     * @return null|string format DD.MM.YYYY hh:mm:ss
+     * @throws Exception
      */
-    /*public function getRunTime(): string
+    public function getRunTime(): ?string
     {
-        $time = $this->serverProcess()['time'];
-        $time = explode(".", $time)[0];
+        if (!$this->isRunning()) {
+            trigger_error("Server <strong>mc" . $this->server->getPort() . "</strong> isn't running", E_USER_WARNING);
+            return null;
+        }
 
-        return (string) $time;
-    }*/
+        $command = "screen -ls mc" . $this->server->getPort();
+        $this->terminal($command);
+
+        preg_match('/([0-9]{1,2}.){2}[0-9]{2,4} ([0-9:]{1,2}){4}/', $this->responseTerminal, $time);
+
+        return (string) $time[0];
+    }
 }
