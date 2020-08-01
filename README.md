@@ -95,7 +95,7 @@ This class allows downloading logs from the server.
 
     $path = "path/to/minecraft/logs/latest.log";
     $logs = new Logs($sftp, $path);
-    echo $logs->getLogs(true);
+    echo implode("<br />", $logs->getLogs(true));
 ```
 
 ## License
