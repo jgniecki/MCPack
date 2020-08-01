@@ -179,6 +179,7 @@ class ServerManagerSell extends AbstractServerManager
 
     /**
      * @return array
+     * @throws Exception
      */
     public function serverProcess(): array
     {
@@ -222,7 +223,8 @@ class ServerManagerSell extends AbstractServerManager
     }
 
     /**
-     * @return float
+     * @return float as %
+     * @throws Exception
      */
     public function getCpuUsage(): float
     {
@@ -238,7 +240,8 @@ class ServerManagerSell extends AbstractServerManager
     }
 
     /**
-     * @return float
+     * @return float as %
+     * @throws Exception
      */
     public function getMemoryUsage(): float
     {
