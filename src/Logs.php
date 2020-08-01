@@ -80,8 +80,10 @@ class Logs
      */
     public function updateCache(): self
     {
-        if (!$this->pathCache)
+        if (!$this->pathCache) {
+            trigger_error("The \$pathCache parameter for " . __CLASS__ . " must be provided", E_USER_WARNING);
             return $this;
+        }
 
         $sftp = $this->sftp;
         $sftp->get($this->pathLogs, $this->pathCache);

@@ -10,6 +10,8 @@
 namespace DevLancer\MCPack;
 
 
+use Exception;
+
 /**
  * Class ServerManager
  * @package DevLancer\MCPack
@@ -28,32 +30,32 @@ class ServerManagerSell extends AbstractServerManager
     /**
      * ServerManagerSell constructor.
      * @param Server $server
-     * @throws \Exception
+     * @throws Exception
      */
     public function __construct(Server $server)
     {
         parent::__construct($server);
 
         if (!$this->server->hasSftp())
-            throw new \Exception("The \$sftp parameter for Server.php must be provided");
+            throw new Exception("The \$sftp parameter for " . __CLASS__ . " must be provided");
     }
 
     /**
-     * @param int $memory
+     * @param int $memory 512 this is 512MB
      * @return bool
-     *
-     * example: 512 this is 512 MB
+     * @throws Exception
      */
     public function run(int $memory = 512): bool
     {
         $port = $this->server->getPort();
+
         if ($this->isRunning()) {
-            $this->notice("Server mc<strong>$port</strong> is running");
+            trigger_error("Server <strong>mc$port</strong> is running");
             return false;
         }
 
         if (!$this->server->hasPath()) {
-            $this->notice("There is no path to the server");
+            trigger_error("There is no path to the server", E_USER_WARNING);
             return false;
         }
 
@@ -61,8 +63,7 @@ class ServerManagerSell extends AbstractServerManager
         $name = end($path);
 
         if (strpos($name, ".jar") === false) {
-            $this->notice("The path does not lead to a server");
-
+            trigger_error("The path " . $this->server->getPath() . " does not lead to a server", E_USER_WARNING);
             return false;
         }
 
@@ -76,6 +77,7 @@ class ServerManagerSell extends AbstractServerManager
 
     /**
      * @return bool
+     * @throws Exception
      */
     public function isRunning(): bool
     {
@@ -88,13 +90,14 @@ class ServerManagerSell extends AbstractServerManager
 
     /**
      * @return bool
+     * @throws Exception
      */
     public function stop(): bool
     {
         $port = $this->server->getPort();
 
         if (!$this->isRunning()) {
-            $this->notice("Server mc<strong>$port</strong> isn't running");
+            trigger_error("Server <strong>mc$port</strong> isn't running");
             return false;
         }
 
@@ -107,16 +110,18 @@ class ServerManagerSell extends AbstractServerManager
     }
 
     /**
+     * @param int $mode
      * @return bool
+     * @throws Exception
      */
-    public function kill(): bool
+    public function kill(int $mode = 9): bool
     {
         if (!$this->isRunning() || !$this->getPid()) {
-            $this->notice("Server mc<strong>" . $this->server->getPort() . "</strong> isn't running");
+            trigger_error("Server <strong>mc" . $this->server->getPort() . "</strong> isn't running");
             return false;
         }
 
-        $command = "kill -9 " . $this->getPid();
+        $command = "kill -" . $mode . " " . $this->getPid();
 
         return $this->terminal($command);
     }
@@ -130,7 +135,6 @@ class ServerManagerSell extends AbstractServerManager
             $this->setPid();
 
         return $this->pid;
-
     }
 
     /**
@@ -140,7 +144,7 @@ class ServerManagerSell extends AbstractServerManager
     {
         $port = $this->server->getPort();
         if (!$this->isRunning()) {
-            $this->notice("Server mc<strong>$port</strong> isn't running");
+            trigger_error("Server <strong>mc$port</strong> isn't running");
             return;
         }
 
@@ -205,14 +209,13 @@ class ServerManagerSell extends AbstractServerManager
     /**
      * @param string $command
      * @return bool
+     * @throws Exception
      */
     private function terminal(string $command): bool
     {
         $sftp = $this->server->getSftp();
-        if(!$sftp->isConnected()) {
-            $this->notice("Failed to connect to SFTP");
-            return false;
-        }
+        if(!$sftp->isConnected())
+            throw new Exception("No SFTP connection");
 
         $this->responseTerminal =  $sftp->exec($command);
         return true;
@@ -224,7 +227,7 @@ class ServerManagerSell extends AbstractServerManager
     public function getCpuUsage(): float
     {
         if (!$this->isRunning()) {
-            $this->notice("Server mc<strong>" . $this->server->getPort() . "</strong> isn't running");
+            trigger_error("Server <strong>mc" . $this->server->getPort() . "</strong> isn't running", E_USER_WARNING);
             return 0.0;
         }
 
@@ -237,10 +240,10 @@ class ServerManagerSell extends AbstractServerManager
     /**
      * @return float
      */
-    public function getMemoryUsage()
+    public function getMemoryUsage(): float
     {
         if (!$this->isRunning()) {
-            $this->notice("Server mc<strong>" . $this->server->getPort() . "</strong> isn't running");
+            trigger_error("Server <strong>mc" . $this->server->getPort() . "</strong> isn't running", E_USER_WARNING);
             return 0.0;
         }
 
@@ -251,21 +254,19 @@ class ServerManagerSell extends AbstractServerManager
     }
 
     /**
-     * @return string
-     *
-     * example: 1024M this is 1024 MB
+     * @return string 1024M this is 1024MB
+     * @throws Exception
      */
     public function getMemory(): string
     {
 
         if (!$this->isRunning()) {
-            $this->notice("Server mc<strong>" . $this->server->getPort() . "</strong> isn't running");
+            trigger_error("Server <strong>mc" . $this->server->getPort() . "</strong> isn't running", E_USER_WARNING);
             return "0M";
         }
 
         $command = "ps -h -p" . $this->getPid();
-        if(!$this->terminal($command))
-            return "0M";
+        $this->terminal($command);
 
         preg_match('/Xmx([0-9]{1,}.)/i', $this->responseTerminal, $xmx);
 
@@ -286,15 +287,4 @@ class ServerManagerSell extends AbstractServerManager
 
         return (string) $time;
     }*/
-
-    /**
-     * @param string $message
-     */
-    private function notice(string $message): void
-    {
-        $array = debug_backtrace();
-        $caller = next($array);
-        trigger_error($message.' in <strong>'.$caller['function'].'</strong> called from <strong>'.$caller['file'].'</strong> on line <strong>'.$caller['line'].'</strong>'."\n<br />error handler");
-
-    }
 }
