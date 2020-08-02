@@ -50,7 +50,7 @@ class Server
      * @param Rcon $rcon
      * @param int $serverPort
      * @param SFTP|null $sftp
-     * @param string|null $path
+     * @param string|null $path path to server file
      */
     public function __construct(Query $query, Rcon $rcon, int $serverPort = 25565, ?SFTP $sftp = null, ?string $path = null)
     {
@@ -66,7 +66,7 @@ class Server
     }
 
     /**
-     * @return int
+     * @return int server port
      */
     public function getPort(): int
     {
