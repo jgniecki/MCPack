@@ -10,7 +10,6 @@
 namespace DevLancer\MCPack;
 
 
-use Exception;
 
 /**
  * Class ServerManager
@@ -30,20 +29,19 @@ class ServerManagerSell extends AbstractServerManager
     /**
      * ServerManagerSell constructor.
      * @param Server $server
-     * @throws Exception
+     * @throws ServerManagerException
      */
     public function __construct(Server $server)
     {
         parent::__construct($server);
 
         if (!$this->server->hasSftp())
-            throw new Exception("The \$sftp parameter for " . __CLASS__ . " must be provided");
+            throw new ServerManagerException("The \$sftp parameter for " . __CLASS__ . " must be provided");
     }
 
     /**
      * @param int $memory 512 this is 512MB
      * @return bool
-     * @throws Exception
      */
     public function run(int $memory = 512): bool
     {
@@ -77,20 +75,19 @@ class ServerManagerSell extends AbstractServerManager
 
     /**
      * @return bool
-     * @throws Exception
      */
     public function isRunning(): bool
     {
         $port = $this->server->getPort();
-        $command = "screen -ls";
-        $this->terminal($command);
+        $command = "screen -ls mc" . $port;
+        if (!$this->terminal($command))
+            return false;
 
         return (strpos($this->responseTerminal, "mc" . $port) !== false);
     }
 
     /**
      * @return bool
-     * @throws Exception
      */
     public function stop(): bool
     {
@@ -112,7 +109,6 @@ class ServerManagerSell extends AbstractServerManager
     /**
      * @param int $mode
      * @return bool
-     * @throws Exception
      */
     public function kill(int $mode = 9): bool
     {
@@ -138,7 +134,6 @@ class ServerManagerSell extends AbstractServerManager
     }
 
     /**
-     *
      */
     private function setPid(): void
     {
@@ -149,15 +144,16 @@ class ServerManagerSell extends AbstractServerManager
         }
 
         $command = "screen -ls mc" . $port;
+
         if (!$this->terminal($command))
             return;
 
         if (!preg_match('/([0-9]{1,}).mc' . $port . '/', $this->responseTerminal, $pid))
             return;
 
-        $pid = (int) $pid[1];
-
+        $pid = (int)$pid[1];
         $command = "ps -h";
+
         if (!$this->terminal($command))
             return;
 
@@ -174,12 +170,11 @@ class ServerManagerSell extends AbstractServerManager
                 $current_pid = $pid_ps;
         }
 
-        $this->pid = (int) $current_pid;
+        $this->pid = (int)$current_pid;
     }
 
     /**
      * @return array
-     * @throws Exception
      */
     public function serverProcess(): array
     {
@@ -188,10 +183,11 @@ class ServerManagerSell extends AbstractServerManager
             return [];
 
         $command = "top -bin 1 -p " . $pid;
+
         if (!$this->terminal($command))
             return [];
 
-        if (strpos($this->responseTerminal, (string) $pid) === FALSE)
+        if (strpos($this->responseTerminal, (string)$pid) === FALSE)
             return [];
 
         $process = explode("\n", $this->responseTerminal);
@@ -210,66 +206,67 @@ class ServerManagerSell extends AbstractServerManager
     /**
      * @param string $command
      * @return bool
-     * @throws Exception
      */
     private function terminal(string $command): bool
     {
         $sftp = $this->server->getSftp();
-        if(!$sftp->isConnected())
-            throw new Exception("No SFTP connection");
 
-        $this->responseTerminal =  $sftp->exec($command);
-        return true;
+        if (!$sftp->isConnected()) {
+            trigger_error("No SFTP connection");
+            return false;
+        }
+
+        $this->responseTerminal = $sftp->exec($command);
+        return (bool)$this->responseTerminal;
+    }
+
+    /**
+     * @param string $name
+     * @return float
+     */
+    private function usage(string $name): float
+    {
+        if (!$this->isRunning()) {
+            trigger_error("Server <strong>mc" . $this->server->getPort() . "</strong> isn't running", E_USER_WARNING);
+            return 0.0;
+        }
+
+        $value = $this->serverProcess()[$name];
+        $value = str_replace(",", ".", $value);
+
+        return (float) $value;
     }
 
     /**
      * @return float as %
-     * @throws Exception
      */
     public function getCpuUsage(): float
     {
-        if (!$this->isRunning()) {
-            trigger_error("Server <strong>mc" . $this->server->getPort() . "</strong> isn't running", E_USER_WARNING);
-            return 0.0;
-        }
-
-        $cpu = $this->serverProcess()['cpu'];
-        $cpu = str_replace(",", ".", $cpu);
-
-        return (float) $cpu;
+        return $this->usage("cpu");
     }
 
     /**
      * @return float as %
-     * @throws Exception
      */
     public function getMemoryUsage(): float
     {
-        if (!$this->isRunning()) {
-            trigger_error("Server <strong>mc" . $this->server->getPort() . "</strong> isn't running", E_USER_WARNING);
-            return 0.0;
-        }
-
-        $memory = $this->serverProcess()['memory'];
-        $memory = str_replace(",", ".", $memory);
-
-        return (float) $memory;
+        return $this->usage("memory");
     }
 
     /**
      * @return string 1024M this is 1024MB
-     * @throws Exception
      */
     public function getMemory(): string
     {
-
         if (!$this->isRunning()) {
             trigger_error("Server <strong>mc" . $this->server->getPort() . "</strong> isn't running", E_USER_WARNING);
             return "0M";
         }
 
         $command = "ps -h -p" . $this->getPid();
-        $this->terminal($command);
+
+        if(!$this->terminal($command))
+            return "0M";
 
         preg_match('/Xmx([0-9]{1,}.)/i', $this->responseTerminal, $xmx);
 
@@ -280,7 +277,6 @@ class ServerManagerSell extends AbstractServerManager
 
     /**
      * @return null|string format DD.MM.YYYY hh:mm:ss
-     * @throws Exception
      */
     public function getRunTime(): ?string
     {
@@ -290,7 +286,9 @@ class ServerManagerSell extends AbstractServerManager
         }
 
         $command = "screen -ls mc" . $this->server->getPort();
-        $this->terminal($command);
+
+        if (!$this->terminal($command))
+            return null;
 
         preg_match('/([0-9]{1,2}.){2}[0-9]{2,4} ([0-9:]{1,2}){4}/', $this->responseTerminal, $time);
 
