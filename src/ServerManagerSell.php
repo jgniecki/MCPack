@@ -113,10 +113,13 @@ class ServerManagerSell extends AbstractServerManager
      */
     public function kill(int $mode = 9): bool
     {
-        if (!$this->isRunning() || !$this->getPid()) {
+        if (!$this->isRunning()) {
             trigger_error("Server <strong>mc" . $this->server->getPort() . "</strong> isn't running");
             return false;
         }
+
+        if (!$this->getPid())
+            return false;
 
         $command = "kill -" . $mode . " " . $this->getPid();
 
