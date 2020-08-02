@@ -215,7 +215,7 @@ class ServerManagerSell extends AbstractServerManager
         $sftp = $this->server->getSftp();
 
         if (!$sftp->isConnected()) {
-            trigger_error("No SFTP connection");
+            trigger_error("No SFTP connection", E_USER_WARNING);
             return false;
         }
 
