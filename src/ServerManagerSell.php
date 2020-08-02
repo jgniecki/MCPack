@@ -21,6 +21,7 @@ class ServerManagerSell extends AbstractServerManager
      * @var string
      */
     private string $responseTerminal = "";
+
     /**
      * @var int|null
      */
@@ -123,6 +124,8 @@ class ServerManagerSell extends AbstractServerManager
     }
 
     /**
+     * Returns the process id (pid) from linux server for minecraft server.
+     *
      * @return int|null
      */
     public function getPid(): ?int
