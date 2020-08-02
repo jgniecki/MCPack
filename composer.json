@@ -10,6 +10,9 @@
         "thedudeguy/rcon": "^1.0",
         "phpseclib/phpseclib": "^2.0"
     },
+    "require-dev": {
+        "phpunit/phpunit": "^8.0"
+    },
     "authors": [
         {
             "name": "Jakub Gniecki",
@@ -19,6 +22,11 @@
     "autoload": {
         "psr-4": {
             "DevLancer\\MCPack\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "DevLancer\\MCPack\\Tests\\": "tests/"
         }
     }
 }
