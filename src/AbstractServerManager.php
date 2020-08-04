@@ -81,7 +81,7 @@ abstract class AbstractServerManager
     /**
      * @return int
      */
-    public function getMaxPlayer(): int
+    public function getMaxPlayers(): int
     {
         if ($this->isOnline())
             return $this->server->getQuery()->getInfo()['MaxPlayers'];
@@ -93,9 +93,9 @@ abstract class AbstractServerManager
      * @param string $player
      * @return bool
      */
-    public function checkPlayer(string $player): bool
+    public function isPlayer(string $player): bool
     {
-        return (bool) \in_array($player, $this->getPlayers());
+        return (bool) in_array($player, $this->getPlayers());
     }
 
     /**
