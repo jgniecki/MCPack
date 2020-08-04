@@ -39,7 +39,7 @@ It enables downloading basic server information and sending commands.
     $server_manager = new ServerManager($server);
 
     $players = count($server_manager->getPlayers());
-    echo $players . "/" . $server_manager->getMaxPlayer();
+    echo $players . "/" . $server_manager->getMaxPlayers();
 ```
 
 ### Query & Rcon with Shell
