@@ -11,7 +11,7 @@
         "phpseclib/phpseclib": "^2.0"
     },
     "require-dev": {
-        "phpunit/phpunit": "^8.0"
+        "phpunit/phpunit": "^9.0"
     },
     "authors": [
         {

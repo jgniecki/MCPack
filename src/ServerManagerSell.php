@@ -29,6 +29,7 @@ class ServerManagerSell extends AbstractServerManager
 
     /**
      * ServerManagerSell constructor.
+     *
      * @param Server $server
      * @throws ServerManagerException
      */
@@ -41,15 +42,19 @@ class ServerManagerSell extends AbstractServerManager
     }
 
     /**
-     * @param int $memory 512 this is 512MB
+     * 512 this is 512MB
+     *
+     * @param int $memory -Xmx parameter
+     * @param int|null $runMemory -Xms parameter
+     * @param bool $strictPort use port from Server::getPort() to start server and changes server-port, --port parameter
      * @return bool
      */
-    public function run(int $memory = 512): bool
+    public function run(int $memory = 512, ?int $runMemory = null, bool $strictPort = false): bool
     {
         $port = $this->server->getPort();
 
         if ($this->isRunning()) {
-            trigger_error("Server <strong>mc$port</strong> is running");
+            trigger_error("Server <strong>mc$port</strong> is running", E_USER_WARNING);
             return false;
         }
 
@@ -66,11 +71,20 @@ class ServerManagerSell extends AbstractServerManager
             return false;
         }
 
+        if ($memory > $this->getTotalMemory() || $runMemory > $this->getTotalMemory()) {
+            trigger_error("Not enough memory, total memory is " . $this->getTotalMemory() . "MB", E_USER_WARNING);
+            return false;
+        }
+
+        if (!$runMemory > 0)
+            $runMemory = $memory;
+
         unset($path[array_key_last($path)]);
         $path = implode("/", $path);
 
-        $command = "cd " . $path . "; screen -dmS mc" . $port . " java -Xmx" . $memory . "M -Xms" . $memory . "M -jar " . $name . " nogui";
+        $parmPort = ($strictPort)? " --port " . $port : "";
 
+        $command = "cd " . $path . "; screen -dmS mc" . $port . " java -Xmx" . $memory . "M -Xms" . $runMemory . "M  -jar " . $name . " nogui " . $parmPort;
         return $this->terminal($command);
     }
 
@@ -108,6 +122,8 @@ class ServerManagerSell extends AbstractServerManager
     }
 
     /**
+     * Kills the server process
+     *
      * @param int $mode
      * @return bool
      */
@@ -140,6 +156,7 @@ class ServerManagerSell extends AbstractServerManager
     }
 
     /**
+     * Tries to determine the PID for the server
      */
     private function setPid(): void
     {
@@ -260,6 +277,8 @@ class ServerManagerSell extends AbstractServerManager
     }
 
     /**
+     * The amount of memory assigned to the server
+     *
      * @return string 1024M this is 1024MB
      */
     public function getMemory(): string
@@ -279,6 +298,34 @@ class ServerManagerSell extends AbstractServerManager
         $xmx = (isset($xmx[1]))? $xmx[1] : "0M";
 
         return $xmx;
+    }
+
+    /**
+     * returns in:
+     *  k - kilobyte,
+     *  m - megabyte,
+     *  g - gigabyte
+     *
+     * @param bool $usage
+     * @param string $type k/m/g
+     * @return int
+     */
+    public function getTotalMemory(bool $usage = false, string $type = "m"): int
+    {
+        $command = "free -" . $type;
+
+        $type = strtolower($type);
+        if (!preg_match('/[kmg]{1}/', $type)) {
+            trigger_error("\"" . $type . "\" is bad type", E_USER_WARNING);
+            return 0;
+        }
+
+        if(!$this->terminal($command))
+            return 0;
+
+        preg_match_all('/[0-9]{1,}/',  $this->responseTerminal, $memory);
+
+        return (int) $memory[0][(int) $usage];
     }
 
     /**
