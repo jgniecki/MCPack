@@ -25,12 +25,32 @@ class Properties
     private array $properties = [];
 
     /**
-     * Properties constructor.
-     * @param string $properties
+     * @var SFTP
      */
-    public function __construct(string $properties)
+    private SFTP $sftp;
+
+    /**
+     * @var string
+     */
+    private string $path;
+
+    /**
+     * Properties constructor.
+     * @param SFTP $sftp
+     * @param string $path
+     * @throws Exception
+     */
+    public function __construct(SFTP $sftp, string $path)
     {
-        $this->properties = explode("\n", $properties);
+        if (!$sftp->isConnected())
+            throw new Exception("No SFTP connection");
+
+        if (!$sftp->file_exists($path))
+            throw new Exception("File $path does not exist");
+
+        $this->path = $path;
+        $this->sftp = $sftp;
+        $this->properties = explode("\n", $this->sftp->get($path));
     }
 
     /**
@@ -78,22 +98,11 @@ class Properties
         return $this->properties;
     }
 
-
     /**
-     * @param SFTP $sftp
-     * @param string $path
-     * @return static
-     * @throws Exception
+     * @return bool
      */
-    public static function generate(SFTP $sftp, string $path): self
+    public function save(): bool
     {
-        if (!$sftp->isConnected())
-            throw new Exception("No SFTP connection");
-
-        if (!$sftp->file_exists($path))
-            throw new Exception("File $path does not exist");
-
-        $properties = $sftp->get($path);
-        return new self($properties);
+        return $this->sftp->put($this->path, (string) implode("\n", $this->properties));
     }
 }
