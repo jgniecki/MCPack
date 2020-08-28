@@ -28,21 +28,21 @@ It enables downloading basic server information and sending commands.
 <?php
     require 'vendor/autoload.php';
     
+    use DevLancer\MCPack\ConsoleRcon;
     use DevLancer\MCPack\Query;
     use DevLancer\MCPack\ServerManager;
-    use DevLancer\MCPack\Server;
-    use Thedudeguy\Rcon;
 
-    $query = new Query("some.minecraftserver.com", 25565);
-    $rcon = new Rcon("some.minecraftserver.com", 25575, "pass", 3);
-    $server = new Server($query, $rcon);
-    $server_manager = new ServerManager($server);
+    $info = new Query("some.minecraftserver.com", 25565);
+    $console = new ConsoleRcon("some.minecraftserver.com", 25575, "pass", 3);
+    $server = new ServerManager($info, $console);
 
-    $players = count($server_manager->getPlayers());
-    echo $players . "/" . $server_manager->getMaxPlayers();
+    $players = $server_manager->getInfo()->getCountPlayers();
+    echo $players . "/" . $server_manager->getInfo()->getMaxPlayers();
+
+    $server_manager->getConsole()->sendCommand("bc MCPack");
 ```
 
-### Query & Rcon with Shell
+### Query & Rcon with SSH
 
 It enables downloading basic server information, sending commands and server management.
 
@@ -50,27 +50,23 @@ It enables downloading basic server information, sending commands and server man
 <?php
     require 'vendor/autoload.php';
     
+    use DevLancer\MCPack\ConsoleRcon;
     use DevLancer\MCPack\Query;
-    use DevLancer\MCPack\ServerManagerSell;
-    use DevLancer\MCPack\Server;
+    use DevLancer\MCPack\ServerManagerSsh;
+    use DevLancer\MCPack\Ssh;
     use phpseclib\Net\SFTP;
-    use Thedudeguy\Rcon;
 
     $host = "some.minecraftserver.com";
-    $login = "user";
-    $password = "password";
-    $sftp = new SFTP($host);
-    $sftp->login($login, $password);
-    $sftp->setTimeout(3);
+    $ssh = new Ssh(new SFTP($host), "username", "password");
+
+
+    $info = new Query($host, 25565);
+    $console = new ConsoleRcon($host, 25575, "pass", 3);
+    $server = new ServerManagerSsh($info, $console, $ssh, 25565);
 
     $path = "path/to/minecraft/server.jar";
-    $query = new Query($host, 25565);
-    $rcon = new Rcon($host, 25575, "pass", 3);
-    $server = new Server($query, $rcon, 25565, $sftp, $path);
-    $server_manager = new ServerManagerSell($server);
-
     if(!$server_manager->isRunning()) {
-        if ($server_manager->run(1024))
+        if ($server_manager->run(["-Xmx1G"], $path))
             echo "server started";
     }
 ```
@@ -84,17 +80,14 @@ This class allows downloading logs from the server.
     require 'vendor/autoload.php';
     
     use DevLancer\MCPack\Logs;
+    use DevLancer\MCPack\Ssh;
     use phpseclib\Net\SFTP;
 
     $host = "some.minecraftserver.com";
-    $login = "user";
-    $password = "password";
-    $sftp = new SFTP($host);
-    $sftp->login($login, $password);
-    $sftp->setTimeout(3);
+    $ssh = new Ssh(new SFTP($host), "username", "password");
 
     $path = "path/to/minecraft/logs/latest.log";
-    $logs = new Logs($sftp, $path);
+    $logs = new Logs($ssh->getSftp(), $path);
     echo implode("<br />", $logs->getLogs(true));
 ```
 
@@ -105,21 +98,34 @@ This class allows downloading logs from the server.
     require 'vendor/autoload.php';
     
     use DevLancer\MCPack\Properties;
+    use DevLancer\MCPack\Ssh;
     use phpseclib\Net\SFTP;
 
     $host = "some.minecraftserver.com";
-    $login = "user";
-    $password = "password";
-    $sftp = new SFTP($host);
-    $sftp->login($login, $password);
-    $sftp->setTimeout(3);
+    $ssh = new Ssh(new SFTP($host), "username", "password");
 
-    $properties = Properties::generate($sftp, "path/to/minecraft/server.properties");
+    $properties = new Properties($ssh->getSftp(), "path/to/minecraft/server.properties");
     $port = (int) $properties->getProperty("server-port");
     $query_port = (int) $properties->getProperty("query.port");
     $rcon_port = (int) $properties->getProperty("rcon.port");
     $rcon_pass = $properties->getProperty("rcon.password");
+```
 
+### Motd
+
+```php
+<?php
+    require 'vendor/autoload.php';
+    
+    use DevLancer\MCPack\Motd;use DevLancer\MCPack\Ping;
+
+    $host = "some.minecraftserver.com";
+    $info = new Ping($host, 25565);
+
+    $motd = new Motd($info);
+    $motd->sendRequest(Motd::REQUEST_EXTRA);
+    
+    echo $motd->getResponse(Motd::RESPONSE_HTML);
 ```
 
 ## License
