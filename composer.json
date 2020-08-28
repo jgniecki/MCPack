@@ -1,6 +1,7 @@
 {
     "name": "dev-lancer/mc-pack",
-    "description": "Minecraft server pack php",
+    "description": "The library is designed to integrate the minecraft server with the website.",
+    "keywords": ["library", "minecraft", "server", "www", "php", "rcon", "query", "motd", "properties", "console", "ssh", "sftp"],
     "type": "library",
     "license": "MIT",
     "minimum-stability": "stable",
