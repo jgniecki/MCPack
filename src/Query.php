@@ -17,7 +17,7 @@ use xPaw\MinecraftQuery;
  * Class Query
  * @package DevLancer\MCPack
  */
-class Query
+class Query implements ServerInfo
 {
     /**
      * @var MinecraftQuery
@@ -58,7 +58,7 @@ class Query
     }
 
     /**
-     * @return bool
+     * @inheritDoc
      */
     public function connect(): bool
     {
@@ -73,7 +73,7 @@ class Query
     }
 
     /**
-     * @return bool
+     * @inheritDoc
      */
     public function isConnected(): bool
     {
@@ -81,7 +81,7 @@ class Query
     }
 
     /**
-     * @return array
+     * @inheritDoc
      */
     public function getPlayers(): array
     {
@@ -92,7 +92,7 @@ class Query
     }
 
     /**
-     * @return array
+     * @inheritDoc
      */
     public function getInfo(): array
     {
@@ -102,4 +102,34 @@ class Query
         return (array) $this->query->GetInfo();
     }
 
+    /**
+     * @inheritDoc
+     */
+    public function getCountPlayers(): int
+    {
+        return count($this->getPlayers());
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function getMaxPlayers(): int
+    {
+        if (!$this->isConnected())
+            return 0;
+
+        return (int) $this->getInfo()['MaxPlayers'];
+    }
+
+    /**
+     * @param null $type
+     * @return string|null
+     */
+    public function getMotd($type = null): ?string
+    {
+        if (!$this->isConnected())
+            return null;
+
+        return (string) $this->getInfo()['HostName'];
+    }
 }
