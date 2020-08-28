@@ -17,76 +17,35 @@ namespace DevLancer\MCPack;
 abstract class AbstractServerManager
 {
     /**
-     * @var Server
+     * @var ServerInfo
      */
-    protected Server $server;
+    protected ServerInfo $info;
 
     /**
-     * AbstractServerManager constructor.
-     * @param Server $server
+     * @var ConsoleInterface
      */
-    public function __construct(Server $server)
-    {
-        $this->server = $server;
-    }
+    protected ConsoleInterface $console;
 
-
-    private function connectRcon(): void
+    public function __construct(ServerInfo $info, ConsoleInterface $console)
     {
-        $rcon = $this->server->getRcon();
-        if (!$rcon->isConnected())
-            $rcon->connect();
+        $this->info = $info;
+        $this->console = $console;
     }
 
     /**
-     * @param string $command
-     * @return bool
+     * @return Query
      */
-    public function sendCommand(string $command): bool
+    public function getInfo(): ServerInfo
     {
-        $this->connectRcon();
-        if (!$this->server->getRcon()->isConnected())
-            return false;
-
-        return (bool) $this->server->getRcon()->sendCommand($command);
+        return $this->info;
     }
 
     /**
-     * @return string|null
+     * @return ConsoleInterface
      */
-    public function responseCommand(): ?string
+    public function getConsole(): ConsoleInterface
     {
-        if (!$this->server->getRcon()->isConnected())
-            return null;
-
-        return $this->server->getRcon()->getResponse();
-    }
-
-    /**
-     * @return Server
-     */
-    public function getServer(): Server
-    {
-        return $this->server;
-    }
-
-    /**
-     * @return array
-     */
-    public function getPlayers(): array
-    {
-        return $this->server->getQuery()->getPlayers();
-    }
-
-    /**
-     * @return int
-     */
-    public function getMaxPlayers(): int
-    {
-        if ($this->isOnline())
-            return $this->server->getQuery()->getInfo()['MaxPlayers'];
-
-        return 0;
+        return $this->console;
     }
 
     /**
@@ -95,7 +54,7 @@ abstract class AbstractServerManager
      */
     public function isPlayer(string $player): bool
     {
-        return (bool) in_array($player, $this->getPlayers());
+        return (bool) in_array($player, $this->info->getPlayers());
     }
 
     /**
@@ -103,6 +62,6 @@ abstract class AbstractServerManager
      */
     public function isOnline(): bool
     {
-        return $this->server->getQuery()->isConnected();
+        return $this->info->isConnected();
     }
 }
