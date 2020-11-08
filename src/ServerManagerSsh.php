@@ -95,8 +95,6 @@ class ServerManagerSsh extends AbstractServerManager
         if ($strictPort)
             $command .= " --port " . $this->port;
 
-        echo $command;
-
         return $this->getSsh()->terminal($command);
     }
 
