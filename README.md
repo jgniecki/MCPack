@@ -54,10 +54,10 @@ It enables downloading basic server information, sending commands and server man
     use DevLancer\MCPack\Query;
     use DevLancer\MCPack\ServerManagerSsh;
     use DevLancer\MCPack\Ssh;
-    use phpseclib\Net\SFTP;
+    use DevLancer\MCPack\Sftp\Sftp;
 
     $host = "some.minecraftserver.com";
-    $ssh = new Ssh(new SFTP($host), "username", "password");
+    $ssh = new Ssh(new Sftp($host), "username", "password");
 
 
     $info = new Query($host, 25565);
@@ -81,10 +81,10 @@ This class allows downloading logs from the server.
     
     use DevLancer\MCPack\Logs;
     use DevLancer\MCPack\Ssh;
-    use phpseclib\Net\SFTP;
+    use DevLancer\MCPack\Sftp\Sftp;
 
     $host = "some.minecraftserver.com";
-    $ssh = new Ssh(new SFTP($host), "username", "password");
+    $ssh = new Ssh(new Sftp($host), "username", "password");
 
     $path = "path/to/minecraft/logs/latest.log";
     $logs = new Logs($ssh->getSftp(), $path);
@@ -99,10 +99,10 @@ This class allows downloading logs from the server.
     
     use DevLancer\MCPack\Properties;
     use DevLancer\MCPack\Ssh;
-    use phpseclib\Net\SFTP;
+    use DevLancer\MCPack\Sftp\Sftp;
 
     $host = "some.minecraftserver.com";
-    $ssh = new Ssh(new SFTP($host), "username", "password");
+    $ssh = new Ssh(new Sftp($host), "username", "password");
 
     $properties = new Properties($ssh->getSftp(), "path/to/minecraft/server.properties");
     $port = (int) $properties->getProperty("server-port");
@@ -117,7 +117,8 @@ This class allows downloading logs from the server.
 <?php
     require 'vendor/autoload.php';
     
-    use DevLancer\MCPack\Motd;use DevLancer\MCPack\Ping;
+    use DevLancer\MCPack\Motd;
+    use DevLancer\MCPack\Ping;
 
     $host = "some.minecraftserver.com";
     $info = new Ping($host, 25565);

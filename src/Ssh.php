@@ -10,6 +10,7 @@
 namespace DevLancer\MCPack;
 
 
+use DevLancer\MCPack\Ssh\SshInterface;
 use Exception;
 use \phpseclib\Net\SFTP;
 
@@ -17,7 +18,7 @@ use \phpseclib\Net\SFTP;
  * Class Ssh
  * @package DevLancer\MCPack
  */
-class Ssh
+class Ssh implements SshInterface
 {
     private string $username;
     private string $password;

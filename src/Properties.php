@@ -10,8 +10,21 @@
 namespace DevLancer\MCPack;
 
 
+use DevLancer\MCPack\Loader\PropertiesLoader;
+use DevLancer\MCPack\Locator\RemoteFileLocator;
+use DevLancer\MCPack\Properties\PropertyNameTrait;
+use DevLancer\MCPack\Properties\ServerProperties;
+use DevLancer\MCPack\Serialization\PropertiesEncoder;
+use DevLancer\MCPack\Serialization\PropertiesNormalizer;
 use Exception;
 use phpseclib\Net\SFTP;
+use ReflectionClass;
+use Symfony\Component\Config\Exception\FileLocatorFileNotFoundException;
+use Symfony\Component\Config\FileLocator;
+use Symfony\Component\Config\Loader\LoaderInterface;
+use Symfony\Component\Serializer\Encoder\JsonEncoder;
+use Symfony\Component\Serializer\Serializer;
+use Symfony\Component\Serializer\SerializerInterface;
 
 /**
  * Class Properties
@@ -19,24 +32,41 @@ use phpseclib\Net\SFTP;
  */
 class Properties
 {
-    private array $properties = [];
-    private SFTP $sftp;
+    use PropertyNameTrait;
+
     private string $path;
+    private ?SFTP $sftp;
+    private LoaderInterface $loader;
+    private SerializerInterface $serializer;
+    private ServerProperties $serverProperties;
 
     /**
-     * @throws Exception
+     * @throws FileLocatorFileNotFoundException
+     * @throws Exception No SFTP connection
      */
-    public function __construct(SFTP $sftp, string $path)
+    public function __construct(?SFTP $sftp, string $path, ?LoaderInterface $loader = null, ?SerializerInterface $serializer = null)
     {
         if (!$sftp->isConnected())
             throw new Exception("No SFTP connection");
 
-        if (!$sftp->file_exists($path))
-            throw new Exception("File $path does not exist");
-
-        $this->path = $path;
         $this->sftp = $sftp;
-        $this->properties = explode("\n", $this->sftp->get($path));
+        $this->path = $path;
+
+        $locator = ($sftp)? new RemoteFileLocator($sftp) : new FileLocator();
+
+        if (!$serializer) {
+            $normalizers = [new PropertiesNormalizer()];
+            $encoders = [new PropertiesEncoder(), new JsonEncoder()];
+            $serializer = new Serializer($normalizers, $encoders);
+        }
+
+        if (!$loader) {
+            $loader = new PropertiesLoader($locator, $serializer);
+        }
+
+        $this->loader = $loader;
+        $this->serializer = $serializer;
+        $this->serverProperties = $loader->load($path)[0];
     }
 
     /**
@@ -46,35 +76,46 @@ class Properties
      */
     public function setProperty(string $name, $value): self
     {
-        $property = preg_grep('/' . $name . '/', $this->properties);
-        $key = key($property);
-        $this->properties[$key] = $name . "=" . $value;
+        $class = new ReflectionClass(ServerProperties::class);
+        $property = $this->getPropertyBySerializedName($class, $name);
+        if (!$property)
+            return $this;
+
+        $setter = 'set' . ucfirst($property->getName());
+        call_user_func_array([$this->serverProperties, $setter], [$value]);
+
         return $this;
     }
 
     public function hasProperty(string $name):bool
     {
-        $property = preg_grep('/' . $name . '/', $this->properties);
-        return $property != [];
+        $class = new ReflectionClass(ServerProperties::class);
+        $property = $this->getPropertyBySerializedName($class, $name);
+        return (bool) $property;
     }
 
-    public function getProperty(string $name):?string
+    public function getProperty(string $name)
     {
-        if (!$this->hasProperty($name))
+        $class = new ReflectionClass(ServerProperties::class);
+        $property = $this->getPropertyBySerializedName($class, $name);
+        if (!$property)
             return null;
 
-        $property = preg_grep('/' . $name . '/', $this->properties);
-        $key = key($property);
-        return trim(explode("=", $property[$key])[1]);
+        return $property->getValue($this->serverProperties);
     }
 
     public function getProperties():array
     {
-        return $this->properties;
+        return []; //todo
     }
 
     public function save(): bool
     {
-        return $this->sftp->put($this->path, (string) implode("\n", $this->properties));
+        $properties = $this->serializer->serialize($this->serverProperties, ServerProperties::class);
+
+        if ($this->loader->getLocator() instanceof RemoteFileLocator)
+            return $this->sftp->put($this->path, $properties);
+
+        return (file_put_contents($this->path, $properties) !== false);
     }
 }
