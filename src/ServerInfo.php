@@ -13,13 +13,15 @@ namespace DevLancer\MCPack;
 /**
  * Interface ServerInfo
  * @package DevLancer\MCPack
+ * @deprecated since dev-lancer/mc-pack 2.2, use \DevLancer\MinecraftStatus\StatusInterface instead
  */
 interface ServerInfo
 {
     /**
+     * @deprecated since dev-lancer/mc-pack 2.2, use \DevLancer\MinecraftStatus\StatusInterface instead
      * @return bool
      */
-    public function connect(): bool;
+    public function connect():bool;
 
     /**
      * @return bool

@@ -10,19 +10,21 @@
 namespace DevLancer\MCPack;
 
 
-use xPaw\MinecraftPing;
-use xPaw\MinecraftPingException;
+use DevLancer\MinecraftStatus\AbstractPing;
+use DevLancer\MinecraftStatus\Exception\ConnectionException;
+use DevLancer\MinecraftStatus\Exception\ReceiveStatusException;
+use DevLancer\MinecraftStatus\FaviconInterface;
+use DevLancer\MinecraftStatus\PingPreOld17;
+use DevLancer\MinecraftStatus\PlayerListInterface;
 
 /**
  * Class Ping
  * @package DevLancer\MCPack
+ * @deprecated since dev-lancer/mc-pack 2.2, use \DevLancer\MinecraftStatus\Ping instead
  */
 class Ping implements ServerInfo
 {
-    /**
-     * @var MinecraftPing|null
-     */
-    private ?MinecraftPing $ping = null;
+    private AbstractPing $ping;
 
     /**
      *
@@ -37,25 +39,6 @@ class Ping implements ServerInfo
      */
     const MOTD_SAMPLE = "sample";
 
-    /**
-     * @var string
-     */
-    private string $host;
-
-    /**
-     * @var int
-     */
-    private int $port;
-
-    /**
-     * @var int
-     */
-    private int $timeout;
-
-    /**
-     * @var bool
-     */
-    private bool $oldPre17;
 
     /**
      * Ping constructor.
@@ -63,17 +46,15 @@ class Ping implements ServerInfo
      * @param int $port
      * @param bool $oldPre17
      * @param int $timeout
-     * @param MinecraftPing|null $ping
+     * @param AbstractPing|null $ping
      */
-    public function __construct(string $host, int $port = 25565, bool $oldPre17 = false, int $timeout = 3, ?MinecraftPing $ping = null)
+    public function __construct(string $host, int $port = 25565, bool $oldPre17 = false, int $timeout = 3, ?Object $ping = null)
     {
-        if (!$ping)
-            $this->ping = $ping;
+        if (!$ping instanceof AbstractPing) {
+            $ping = ($oldPre17)? new \DevLancer\MinecraftStatus\Ping($host, $port, $timeout) : new PingPreOld17($host, $port, $timeout);
+        }
 
-        $this->host = $host;
-        $this->port = $port;
-        $this->oldPre17 = $oldPre17;
-        $this->timeout = $timeout;
+        $this->ping = $ping;
     }
 
     /**
@@ -82,21 +63,12 @@ class Ping implements ServerInfo
     public function connect(): bool
     {
         try {
-            if (!$this->ping)
-                $this->create();
-
-            $this->ping->Connect();
-            $connected = true;
-        } catch (MinecraftPingException $exception) {
-            $connected = false;
+            $this->ping->connect();
+        } catch (ReceiveStatusException|ConnectionException $e) {
+            return false;
         }
 
-        return $connected;
-    }
-    
-    private function create(): void
-    {
-        $this->ping = new MinecraftPing($this->host, $this->port, $this->timeout);
+        return true;
     }
 
     /**
@@ -104,7 +76,7 @@ class Ping implements ServerInfo
      */
     public function isConnected(): bool
     {
-        return $this->connect();
+        return $this->ping->isConnected();
     }
 
     /**
@@ -115,7 +87,10 @@ class Ping implements ServerInfo
         if (!$this->isConnected())
             return [];
 
-        return $this->getInfo()['players']['sample'] ?? [];
+        if (!$this->ping instanceof PlayerListInterface)
+            return [];
+
+        return $this->ping->getPlayers();
     }
 
     /**
@@ -126,7 +101,7 @@ class Ping implements ServerInfo
         if (!$this->isConnected())
             return 0;
 
-        return $this->ping->Query()['players']['online'];
+        return $this->ping->getCountPlayers();
     }
 
     /**
@@ -137,7 +112,7 @@ class Ping implements ServerInfo
         if (!$this->isConnected())
             return 0;
 
-        return $this->ping->Query()['players']['max'];
+        return $this->ping->getMaxPlayers();
     }
 
     /**
@@ -148,18 +123,20 @@ class Ping implements ServerInfo
         if (!$this->isConnected())
             return [];
 
-        return (array) $this->ping->Query();
+        return (array) $this->ping->getInfo();
     }
 
     /**
      * @return string|null
-     * @throws MinecraftPingException
      */
     public function getFavicon(): ?string
     {
         if (!$this->isConnected())
             return null;
 
-        return (string) $this->ping->Query()['favicon'];
+        if (!$this->ping instanceof FaviconInterface)
+            return null;
+
+        return (string) $this->ping->getFavicon();
     }
 }

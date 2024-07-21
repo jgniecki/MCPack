@@ -10,51 +10,33 @@
 namespace DevLancer\MCPack;
 
 
-use xPaw\MinecraftQueryException;
-use xPaw\MinecraftQuery;
+use DevLancer\MinecraftStatus\AbstractQuery;
+use DevLancer\MinecraftStatus\Exception\ConnectionException;
+use DevLancer\MinecraftStatus\Exception\ReceiveStatusException;
 
 /**
  * Class Query
  * @package DevLancer\MCPack
+ * @deprecated since dev-lancer/mc-pack 2.2, use \DevLancer\MinecraftStatus\Query instead
  */
 class Query implements ServerInfo
 {
-    /**
-     * @var MinecraftQuery
-     */
-    private MinecraftQuery $query;
-
-    /**
-     * @var string
-     */
-    private string $host;
-
-    /**
-     * @var int
-     */
-    private int $port;
-
-    /**
-     * @var int
-     */
-    private int $timeout;
+    private AbstractQuery $query;
 
     /**
      * Query constructor.
      * @param string $host
      * @param int $port
      * @param int $timeout
-     * @param MinecraftQuery|null $query
+     * @param AbstractQuery|null $query
      */
-    public function __construct(string $host, int $port = 25565, int $timeout = 3, ?MinecraftQuery $query = null)
+    public function __construct(string $host, int $port = 25565, int $timeout = 3, ?Object $query = null)
     {
-        if (!$query)
-            $query = new MinecraftQuery();
+        if (!$query instanceof AbstractQuery) {
+            $query = new \DevLancer\MinecraftStatus\Query($host, $port, $timeout);
+        }
 
         $this->query = $query;
-        $this->host = $host;
-        $this->port = $port;
-        $this->timeout = $timeout;
     }
 
     /**
@@ -63,13 +45,12 @@ class Query implements ServerInfo
     public function connect(): bool
     {
         try {
-            $this->query->Connect($this->host, $this->port, $this->timeout);
-            $connected = true;
-        } catch (MinecraftQueryException $exception) {
-            $connected = false;
+            $this->query->connect();
+        } catch (ReceiveStatusException|ConnectionException $e) {
+            return false;
         }
 
-        return $connected;
+        return true;
     }
 
     /**
@@ -77,7 +58,7 @@ class Query implements ServerInfo
      */
     public function isConnected(): bool
     {
-        return $this->connect();
+        return $this->query->isConnected();
     }
 
     /**
@@ -88,7 +69,7 @@ class Query implements ServerInfo
         if (!$this->isConnected())
             return [];
 
-        return (array) $this->query->GetPlayers();
+        return (array) $this->query->getPlayers();
     }
 
     /**
@@ -99,7 +80,7 @@ class Query implements ServerInfo
         if (!$this->isConnected())
             return [];
 
-        return (array) $this->query->GetInfo();
+        return (array) $this->query->getInfo();
     }
 
     /**
@@ -107,7 +88,7 @@ class Query implements ServerInfo
      */
     public function getCountPlayers(): int
     {
-        return count($this->getPlayers());
+        return $this->query->getCountPlayers();
     }
 
     /**
@@ -118,7 +99,7 @@ class Query implements ServerInfo
         if (!$this->isConnected())
             return 0;
 
-        return (int) $this->getInfo()['MaxPlayers'];
+        return (int) $this->query->getMaxPlayers();
     }
 
     /**
@@ -130,6 +111,6 @@ class Query implements ServerInfo
         if (!$this->isConnected())
             return null;
 
-        return (string) $this->getInfo()['HostName'];
+        return (string) $this->query->getMotd();
     }
 }

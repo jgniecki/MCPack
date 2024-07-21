@@ -12,6 +12,7 @@ namespace DevLancer\MCPack;
 /**
  * Class Motd
  * @package DevLancer\MCPack
+ * @deprecated since dev-lancer/mc-pack 2.2, use dev-lancer/minecraft-motd-parser package
  */
 class Motd
 {
