@@ -19,33 +19,11 @@ use \phpseclib\Net\SFTP;
  */
 class Ssh
 {
-    /**
-     * @var string
-     */
     private string $username;
-
-    /**
-     * @var string
-     */
     private string $password;
-
-    /**
-     * @var string
-     */
     private string $response;
-
-    /**
-     * @var SFTP
-     */
     private SFTP $sftp;
 
-    /**
-     * Ssh constructor.
-     * @param SFTP $sftp
-     * @param string $username
-     * @param string $password
-     * @throws Exception
-     */
     public function __construct(SFTP $sftp, string $username, string $password)
     {
         $this->username = $username;
@@ -57,11 +35,6 @@ class Ssh
             throw new Exception("No SFTP connection");
     }
 
-    /**
-     * @param string $command
-     * @param string|null $regex
-     * @return bool
-     */
     public function terminal(string $command, ?string $regex = null): bool
     {
         $this->response = (string) $this->sftp->exec($command);
@@ -74,11 +47,6 @@ class Ssh
         return (bool) $this->response;
     }
 
-    /**
-     * @param string $command
-     * @param string|null $regex
-     * @return bool
-     */
     public function interactiveTerminal(string $command, ?string $regex = null): bool
     {
         $this->sftp->read('/.*@.*[$|#]/', SFTP::READ_REGEX);
@@ -101,9 +69,6 @@ class Ssh
         return (bool) $this->response;
     }
 
-    /**
-     * @return bool
-     */
     private function sudo(): bool
     {
         $this->sftp->write($this->getPassword()."\n");
@@ -117,37 +82,23 @@ class Ssh
         return true;
     }
 
-    /**
-     * @return string
-     */
     public function getUsername(): string
     {
         return $this->username;
     }
 
-    /**
-     * @return string
-     */
     public function getPassword(): string
     {
         return $this->password;
     }
 
-    /**
-     * @return string
-     */
     public function getResponse(): string
     {
         return $this->response;
     }
 
-    /**
-     * @return SFTP
-     */
     public function getSftp(): SFTP
     {
         return $this->sftp;
     }
-
-
 }

@@ -19,25 +19,11 @@ use phpseclib\Net\SFTP;
  */
 class Properties
 {
-    /**
-     * @var array
-     */
     private array $properties = [];
-
-    /**
-     * @var SFTP
-     */
     private SFTP $sftp;
-
-    /**
-     * @var string
-     */
     private string $path;
 
     /**
-     * Properties constructor.
-     * @param SFTP $sftp
-     * @param string $path
      * @throws Exception
      */
     public function __construct(SFTP $sftp, string $path)
@@ -55,7 +41,7 @@ class Properties
 
     /**
      * @param string $name
-     * @param mixed $value
+     * @param string|int|bool|float $value
      * @return self
      */
     public function setProperty(string $name, $value): self
@@ -66,20 +52,12 @@ class Properties
         return $this;
     }
 
-    /**
-     * @param string $name
-     * @return bool
-     */
     public function hasProperty(string $name):bool
     {
         $property = preg_grep('/' . $name . '/', $this->properties);
         return $property != [];
     }
 
-    /**
-     * @param string $name
-     * @return string|null
-     */
     public function getProperty(string $name):?string
     {
         if (!$this->hasProperty($name))
@@ -90,17 +68,11 @@ class Properties
         return trim(explode("=", $property[$key])[1]);
     }
 
-    /**
-     * @return array
-     */
     public function getProperties():array
     {
         return $this->properties;
     }
 
-    /**
-     * @return bool
-     */
     public function save(): bool
     {
         return $this->sftp->put($this->path, (string) implode("\n", $this->properties));

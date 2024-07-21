@@ -16,19 +16,7 @@ namespace DevLancer\MCPack;
  */
 interface ConsoleInterface
 {
-    /**
-     * @param string $command
-     * @return bool
-     */
     public function sendCommand(string $command): bool;
-
-    /**
-     * @return string|null
-     */
     public function getResponse(): ?string;
-
-    /**
-     * @return bool
-     */
     public function isConnected(): bool;
 }

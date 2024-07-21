@@ -12,7 +12,9 @@ namespace DevLancer\MCPack;
 
 use DevLancer\MinecraftStatus\AbstractQuery;
 use DevLancer\MinecraftStatus\Exception\ConnectionException;
+use DevLancer\MinecraftStatus\Exception\NotConnectedException;
 use DevLancer\MinecraftStatus\Exception\ReceiveStatusException;
+use DevLancer\MinecraftStatus\PlayerListInterface;
 
 /**
  * Class Query
@@ -39,9 +41,6 @@ class Query implements ServerInfo
         $this->query = $query;
     }
 
-    /**
-     * @inheritDoc
-     */
     public function connect(): bool
     {
         try {
@@ -53,64 +52,56 @@ class Query implements ServerInfo
         return true;
     }
 
-    /**
-     * @inheritDoc
-     */
     public function isConnected(): bool
     {
         return $this->query->isConnected();
     }
 
-    /**
-     * @inheritDoc
-     */
     public function getPlayers(): array
     {
-        if (!$this->isConnected())
+        if (!$this->query instanceof PlayerListInterface)
             return [];
 
-        return (array) $this->query->getPlayers();
+        try {
+            return $this->query->getPlayers();
+        } catch (NotConnectedException $e) {
+            return [];
+        }
     }
 
-    /**
-     * @inheritDoc
-     */
     public function getInfo(): array
     {
-        if (!$this->isConnected())
+        try {
+            return $this->query->getInfo();
+        } catch (NotConnectedException $e) {
             return [];
-
-        return (array) $this->query->getInfo();
+        }
     }
 
-    /**
-     * @inheritDoc
-     */
     public function getCountPlayers(): int
     {
-        return $this->query->getCountPlayers();
+        try {
+            return $this->query->getCountPlayers();
+        } catch (NotConnectedException $e) {
+            return 0;
+        }
     }
 
-    /**
-     * @inheritDoc
-     */
     public function getMaxPlayers(): int
     {
-        if (!$this->isConnected())
+        try {
+            return $this->query->getMaxPlayers();
+        } catch (NotConnectedException $e) {
             return 0;
-
-        return (int) $this->query->getMaxPlayers();
+        }
     }
 
-    /**
-     * @param null $type
-     * @return string|null
-     */
     public function getMotd($type = null): ?string
     {
-        if (!$this->isConnected())
+        try {
+            return $this->query->getMotd();
+        } catch (NotConnectedException $e) {
             return null;
-
-        return (string) $this->query->getMotd();
+        }
     }
 }

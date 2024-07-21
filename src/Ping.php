@@ -12,6 +12,7 @@ namespace DevLancer\MCPack;
 
 use DevLancer\MinecraftStatus\AbstractPing;
 use DevLancer\MinecraftStatus\Exception\ConnectionException;
+use DevLancer\MinecraftStatus\Exception\NotConnectedException;
 use DevLancer\MinecraftStatus\Exception\ReceiveStatusException;
 use DevLancer\MinecraftStatus\FaviconInterface;
 use DevLancer\MinecraftStatus\PingPreOld17;
@@ -25,20 +26,9 @@ use DevLancer\MinecraftStatus\PlayerListInterface;
 class Ping implements ServerInfo
 {
     private AbstractPing $ping;
-
-    /**
-     *
-     */
     const MOTD_RAW = "text";
-    /**
-     *
-     */
     const MOTD_EXTRA = "extra";
-    /**
-     *
-     */
     const MOTD_SAMPLE = "sample";
-
 
     /**
      * Ping constructor.
@@ -57,9 +47,6 @@ class Ping implements ServerInfo
         $this->ping = $ping;
     }
 
-    /**
-     * @inheritDoc
-     */
     public function connect(): bool
     {
         try {
@@ -71,72 +58,68 @@ class Ping implements ServerInfo
         return true;
     }
 
-    /**
-     * @inheritDoc
-     */
     public function isConnected(): bool
     {
         return $this->ping->isConnected();
     }
 
-    /**
-     * @inheritDoc
-     */
     public function getPlayers(): array
     {
-        if (!$this->isConnected())
-            return [];
-
         if (!$this->ping instanceof PlayerListInterface)
             return [];
 
-        return $this->ping->getPlayers();
+        try {
+            return $this->ping->getPlayers();
+        } catch (NotConnectedException $e) {
+            return [];
+        }
     }
 
-    /**
-     * @inheritDoc
-     */
     public function getCountPlayers(): int
     {
-        if (!$this->isConnected())
+        try {
+            return $this->ping->getCountPlayers();
+        } catch (NotConnectedException $e) {
             return 0;
-
-        return $this->ping->getCountPlayers();
+        }
     }
 
-    /**
-     * @inheritDoc
-     */
     public function getMaxPlayers(): int
     {
-        if (!$this->isConnected())
+        try {
+            return $this->ping->getMaxPlayers();
+        } catch (NotConnectedException $e) {
             return 0;
-
-        return $this->ping->getMaxPlayers();
+        }
     }
 
-    /**
-     * @inheritDoc
-     */
     public function getInfo(): array
     {
-        if (!$this->isConnected())
+        try {
+            return (array)$this->ping->getInfo();
+        } catch (NotConnectedException $e) {
             return [];
-
-        return (array) $this->ping->getInfo();
+        }
     }
 
-    /**
-     * @return string|null
-     */
     public function getFavicon(): ?string
     {
-        if (!$this->isConnected())
-            return null;
-
         if (!$this->ping instanceof FaviconInterface)
             return null;
 
-        return (string) $this->ping->getFavicon();
+        try {
+            return $this->ping->getFavicon();
+        } catch (NotConnectedException $e) {
+            return null;
+        }
+    }
+
+    public function getMotd(): ?string
+    {
+        try {
+            return $this->ping->getMotd();
+        } catch (NotConnectedException $e) {
+            return null;
+        }
     }
 }

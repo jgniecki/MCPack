@@ -18,32 +18,11 @@ use phpseclib\Net\SFTP;
  */
 class Logs
 {
-    /**
-     * @var SFTP
-     */
     private SFTP $sftp;
-
-    /**
-     * @var string
-     */
     private string $pathLogs;
-
-    /**
-     * @var string|null
-     */
     private ?string $pathCache = null;
-
-    /**
-     * @var array
-     */
     private array $logs = [];
 
-    /**
-     * Logs constructor.
-     * @param SFTP $sftp
-     * @param string $pathLogs
-     * @param string|null $pathCache
-     */
     public function __construct(SFTP $sftp, string $pathLogs, string $pathCache = null)
     {
         $this->sftp = $sftp;
@@ -53,9 +32,6 @@ class Logs
             $this->pathCache = $pathCache;
     }
 
-    /**
-     * @return $this
-     */
     public function update(): self
     {
         $sftp = $this->sftp;
@@ -75,9 +51,6 @@ class Logs
         return $this;
     }
 
-    /**
-     * @return $this
-     */
     public function updateCache(): self
     {
         if (!$this->pathCache) {
@@ -91,9 +64,6 @@ class Logs
 
     }
 
-    /**
-     *
-     */
     private function loadCache(): void
     {
         if (!$this->pathCache)
@@ -108,13 +78,6 @@ class Logs
 
     }
 
-    /**
-     * @param bool $update
-     * @param int $offset
-     * @param int $length
-     * @param bool $reverse
-     * @return array
-     */
     public function getLogs(bool $update = false, int $offset = 0, int $length = -1, bool $reverse = false): array
     {
         if ($update)

@@ -13,17 +13,11 @@ namespace DevLancer\MCPack;
 /**
  * Class AbstractServerManager
  * @package DevLancer\MCPack
+ * @deprecated since dev-lancer/mc-pack 2.2, use ServerManagerInterface instead
  */
 abstract class AbstractServerManager
 {
-    /**
-     * @var ServerInfo
-     */
     protected ServerInfo $info;
-
-    /**
-     * @var ConsoleInterface
-     */
     protected ConsoleInterface $console;
 
     public function __construct(ServerInfo $info, ConsoleInterface $console)
@@ -32,34 +26,21 @@ abstract class AbstractServerManager
         $this->console = $console;
     }
 
-    /**
-     * @return Query
-     */
     public function getInfo(): ServerInfo
     {
         return $this->info;
     }
 
-    /**
-     * @return ConsoleInterface
-     */
     public function getConsole(): ConsoleInterface
     {
         return $this->console;
     }
 
-    /**
-     * @param string $player
-     * @return bool
-     */
     public function isPlayer(string $player): bool
     {
-        return (bool) in_array($player, $this->info->getPlayers());
+        return in_array($player, $this->info->getPlayers());
     }
 
-    /**
-     * @return bool
-     */
     public function isOnline(): bool
     {
         return $this->info->isConnected();

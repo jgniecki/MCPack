@@ -10,7 +10,10 @@
         "xpaw/php-minecraft-query": "^4.0",
         "thedudeguy/rcon": "^1.0",
         "phpseclib/phpseclib": "^2.0",
-        "dev-lancer/minecraft-status": "^3.0"
+        "dev-lancer/minecraft-status": "^3.0",
+        "dev-lancer/minecraft-motd-parser": "^1.0",
+        "symfony/polyfill-php83": "^1.30",
+      "ext-json": "*"
     },
     "require-dev": {
         "phpunit/phpunit": "^9.0"

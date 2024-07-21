@@ -17,31 +17,11 @@ namespace DevLancer\MCPack;
  */
 class ServerManagerSsh extends AbstractServerManager
 {
-    /**
-     * @var int|null
-     */
     private ?int $pid = null;
-
-    /**
-     * @var Ssh
-     */
     private Ssh $ssh;
-
-    /**
-     * @var int
-     */
     private int $port;
-
     const GIGABYTE_MEMORY = "g";
     const MEGABYTE_MEMORY = "m";
-
-    /**
-     * ServerManagerSell constructor.
-     * @param ServerInfo $info
-     * @param ConsoleInterface $console
-     * @param Ssh $ssh
-     * @param int $serverPort
-     */
     public function __construct(ServerInfo $info, ConsoleInterface $console, Ssh $ssh, int $serverPort = 25565)
     {
         parent::__construct($info, $console);
@@ -50,17 +30,11 @@ class ServerManagerSsh extends AbstractServerManager
         $this->port = $serverPort;
     }
 
-    /**
-     * @return Ssh
-     */
     public function getSsh(): Ssh
     {
         return $this->ssh;
     }
 
-    /**
-     * @return int
-     */
     public function getPort(): int
     {
         return $this->port;
@@ -117,10 +91,6 @@ class ServerManagerSsh extends AbstractServerManager
         return $command;
     }
 
-    /**
-     * @param string $path
-     * @return array
-     */
     private function generatePath(string $path): array
     {
         $path = explode("/", $path);
@@ -131,9 +101,6 @@ class ServerManagerSsh extends AbstractServerManager
         return ["path" => $path, "name" => $name];
     }
 
-    /**
-     * @return bool
-     */
     public function isRunning(): bool
     {
 
@@ -141,9 +108,6 @@ class ServerManagerSsh extends AbstractServerManager
         return $this->getSsh()->terminal($command, '/mc' . $this->port . '/' );
     }
 
-    /**
-     * @return bool
-     */
     public function stop(): bool
     {
         if (!$this->isRunning()) {
@@ -212,9 +176,6 @@ class ServerManagerSsh extends AbstractServerManager
         $this->pid = (int) $info[1];
     }
 
-    /**
-     * @return array
-     */
     public function serverProcess(): array
     {
         if (!$this->getPid())
@@ -241,10 +202,6 @@ class ServerManagerSsh extends AbstractServerManager
         ];
     }
 
-    /**
-     * @param string $name
-     * @return float
-     */
     private function usageCM(string $name): float
     {
         if (!$this->isRunning()) {

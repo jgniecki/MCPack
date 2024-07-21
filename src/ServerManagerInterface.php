@@ -9,11 +9,6 @@
 
 namespace DevLancer\MCPack;
 
-
-/**
- * Class ServerManager
- * @package DevLancer\MCPack
- */
-class ServerManager extends AbstractServerManager implements ServerManagerInterface
+interface ServerManagerInterface
 {
 }
