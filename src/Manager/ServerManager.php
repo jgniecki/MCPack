@@ -6,34 +6,27 @@
  * file that was distributed with this source code.
  */
 
+namespace DevLancer\MCPack\Manager;
 
-namespace DevLancer\MCPack;
+use DevLancer\MCPack\Terminal;
 
 
-
-/**
- * Class ServerManager
- * @package DevLancer\MCPack
- * @deprecated since dev-lancer/mc-pack 2.2, use DevLancer\MCPack\Manager\ServerManager instead
- */
-class ServerManagerSsh extends AbstractServerManager
+class ServerManager implements ServerManagerInterface
 {
     private ?int $pid = null;
-    private Ssh $ssh;
+    private Terminal $terminal;
     private int $port;
     const GIGABYTE_MEMORY = "g";
     const MEGABYTE_MEMORY = "m";
-    public function __construct(ServerInfo $info, ConsoleInterface $console, Ssh $ssh, int $serverPort = 25565)
+    public function __construct(Terminal $terminal, int $serverPort = 25565)
     {
-        parent::__construct($info, $console);
-
-        $this->ssh = $ssh;
+        $this->terminal = $terminal;
         $this->port = $serverPort;
     }
 
-    public function getSsh(): Ssh
+    public function getTerminal(): Terminal
     {
-        return $this->ssh;
+        return $this->terminal;
     }
 
     public function getPort(): int
@@ -70,7 +63,7 @@ class ServerManagerSsh extends AbstractServerManager
         if ($strictPort)
             $command .= " --port " . $this->port;
 
-        return $this->getSsh()->terminal($command);
+        return $this->terminal->terminal($command);
     }
 
     private function generateRunCommand(array $parameters): string
@@ -106,7 +99,7 @@ class ServerManagerSsh extends AbstractServerManager
     {
 
         $command = "screen -ls mc" . $this->port;
-        return $this->getSsh()->terminal($command, '/mc' . $this->port . '/' );
+        return $this->terminal->terminal($command, '/mc' . $this->port . '/' );
     }
 
     public function stop(): bool
@@ -116,12 +109,9 @@ class ServerManagerSsh extends AbstractServerManager
             return false;
         }
 
-        if (!$this->getConsole()->sendCommand("stop"))
-            return false;
-
         $command = "screen -X -S mc" . $this->port . " quit";
 
-        return $this->getSsh()->terminal($command);
+        return $this->terminal->terminal($command);
     }
 
     /**
@@ -142,7 +132,7 @@ class ServerManagerSsh extends AbstractServerManager
 
         $command = "kill -" . $mode . " " . $this->getPid();
 
-        return $this->getSsh()->terminal($command);
+        return $this->terminal->terminal($command);
     }
 
     /**
@@ -169,9 +159,9 @@ class ServerManagerSsh extends AbstractServerManager
         }
 
         $command = "sudo netstat -tulpn | grep " . $this->port;
-        $this->getSsh()->interactiveTerminal($command);
+        $this->terminal->interactiveTerminal($command);
 
-        if (preg_match('/([0-9]{1,})\/java/', $this->getSsh()->getResponse(), $info) === false)
+        if (preg_match('/([0-9]{1,})\/java/', $this->terminal->getResponse(), $info) === false)
             return;
 
         $this->pid = (int) $info[1];
@@ -184,13 +174,13 @@ class ServerManagerSsh extends AbstractServerManager
 
         $command = "top -bin 1 -p " . $this->getPid();
 
-        if (!$this->getSsh()->terminal($command))
+        if (!$this->terminal->terminal($command))
             return [];
 
-        if (strpos($this->getSsh()->getResponse(), (string) $this->getPid()) === FALSE)
+        if (strpos($this->terminal->getResponse(), (string) $this->getPid()) === FALSE)
             return [];
 
-        $process = explode("\n", $this->getSsh()->getResponse());
+        $process = explode("\n", $this->terminal->getResponse());
         $id = array_search($this->getPid(), $process);
         preg_match_all('/[a-zA-Z0-9,.:_-]{1,}/', $process[$id], $process);
 
@@ -247,10 +237,10 @@ class ServerManagerSsh extends AbstractServerManager
 
         $command = "ps -h -p" . $this->getPid();
 
-        if(!$this->getSsh()->terminal($command))
+        if(!$this->terminal->terminal($command))
             return 0.0;
 
-        preg_match('/Xmx([0-9]{1,}.)/i', $this->getSsh()->getResponse(), $xmx);
+        preg_match('/Xmx([0-9]{1,}.)/i', $this->terminal->getResponse(), $xmx);
 
         if (!isset($xmx[1]))
             return 0.0;
@@ -279,10 +269,10 @@ class ServerManagerSsh extends AbstractServerManager
     {
         $command = "free -" . $type;
 
-        if(!$this->getSsh()->terminal($command))
+        if(!$this->terminal->terminal($command))
             return 0;
 
-        preg_match_all('/[0-9]{1,}/',  $this->getSsh()->getResponse(), $memory);
+        preg_match_all('/[0-9]{1,}/',  $this->terminal->getResponse(), $memory);
 
         return (int) $memory[0][(int) $usage];
     }
@@ -317,10 +307,10 @@ class ServerManagerSsh extends AbstractServerManager
 
         $command = "screen -ls mc" . $this->port;
 
-        if (!$this->getSsh()->terminal($command))
+        if (!$this->terminal->terminal($command))
             return null;
 
-        preg_match('/([0-9]{1,2}.){2}[0-9]{2,4} ([0-9:]{1,2}){4}/', $this->getSsh()->getResponse(), $time);
+        preg_match('/([0-9]{1,2}.){2}[0-9]{2,4} ([0-9:]{1,2}){4}/', $this->terminal->getResponse(), $time);
 
         return (string) $time[0];
     }

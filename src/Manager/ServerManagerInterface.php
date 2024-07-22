@@ -7,11 +7,8 @@
  */
 
 
-namespace DevLancer\MCPack\Sftp;
+namespace DevLancer\MCPack\Manager;
 
-use DevLancer\MCPack\Ssh\SshInterface;
-
-interface SftpInterface extends SshInterface
+interface ServerManagerInterface
 {
-
 }

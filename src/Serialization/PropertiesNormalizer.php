@@ -33,6 +33,7 @@ class PropertiesNormalizer implements DenormalizerInterface, NormalizerInterface
         $properties = $reflectionClass->getProperties(ReflectionProperty::IS_PRIVATE);
         $output = '';
         foreach ($properties as $property) {
+            $property->setAccessible(true);
             $value = $property->getValue($object);
             if ($value === null) {
                 continue;
@@ -66,6 +67,7 @@ class PropertiesNormalizer implements DenormalizerInterface, NormalizerInterface
             list($key, $value) = explode('=', $line, 2);
             $key = trim($key);
             $property = $this->getPropertyBySerializedName($reflectionClass, $key);
+            $property->setAccessible(true);
 
             if ($property) {
                 $propertyName = $property->getName();

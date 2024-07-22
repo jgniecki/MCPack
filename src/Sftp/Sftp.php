@@ -9,6 +9,8 @@
 
 namespace DevLancer\MCPack\Sftp;
 
+use DevLancer\MCPack\Ssh\SshInterface;
+
 class Sftp extends \phpseclib\Net\SFTP implements SftpInterface
 {
 

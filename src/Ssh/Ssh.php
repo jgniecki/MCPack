@@ -6,12 +6,10 @@
  * file that was distributed with this source code.
  */
 
+namespace DevLancer\MCPack\Ssh;
 
-namespace DevLancer\MCPack\Sftp;
+use phpseclib\Net\SSH2;
 
-use DevLancer\MCPack\Ssh\SshInterface;
-
-interface SftpInterface extends SshInterface
+class Ssh extends SSH2 implements SshInterface
 {
-
 }

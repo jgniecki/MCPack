@@ -14,8 +14,9 @@
         "dev-lancer/minecraft-motd-parser": "^1.0",
         "symfony/polyfill-php83": "^1.30",
       "ext-json": "*",
-        "symfony/config": "^6.4",
-        "symfony/serializer": "^6.4"
+        "symfony/config": "^5.4",
+        "symfony/serializer": "^5.4",
+        "symfony/property-access": "^5.4"
     },
     "require-dev": {
         "phpunit/phpunit": "^9.0"

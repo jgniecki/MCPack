@@ -8,10 +8,13 @@
 
 namespace DevLancer\MCPack\Properties;
 
+use ReflectionClass;
 use Symfony\Component\Serializer\Annotation\SerializedName;
 
 class ServerProperties
 {
+    use PropertyNameTrait;
+
     /**
      * @SerializedName("accepts-transfers")
      * @var ?bool
@@ -506,6 +509,23 @@ class ServerProperties
         $this->useNativeTransport = $useNativeTransport;
         $this->viewDistance = $viewDistance;
         $this->whiteList = $whiteList;
+    }
+
+    public function toArray(): array
+    {
+        $result = [];
+
+        $class = new ReflectionClass(ServerProperties::class);
+        $properties = $class->getProperties(\ReflectionProperty::IS_PRIVATE);
+        foreach ($properties as $property) {
+            $property->setAccessible(true);
+            if ($property->getValue($this) === null)
+                continue;
+
+            $result[$this->getSerializedName($property)] = $property->getValue($this);
+        }
+
+        return $result;
     }
 
     public function getAcceptsTransfers(): ?bool

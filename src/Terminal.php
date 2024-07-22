@@ -1,48 +1,43 @@
 <?php declare(strict_types=1);
 /**
- * @author Jakub Gniecki
- * @copyright Jakub Gniecki <kubuspl@onet.eu>
+ * @author Jakub Gniecki <kubuspl@onet.eu>
+ * @copyright
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
  */
 
-
 namespace DevLancer\MCPack;
-
 
 use DevLancer\MCPack\Exception\SshConnectionException;
 use DevLancer\MCPack\Ssh\SshInterface;
-use \phpseclib\Net\SFTP;
+use Exception;
+use phpseclib\Net\SFTP;
 
-/**
- * Class Ssh
- * @package DevLancer\MCPack
- * @deprecated since dev-lancer/mc-pack 2.2, use DevLancer\MCPack\Terminal instead
- */
-class Ssh implements SshInterface
+class Terminal
+
 {
     private string $username;
     private string $password;
     private string $response;
-    private SFTP $sftp;
+    private SshInterface $ssh;
 
     /**
-     * @throws SshConnectionException No SFTP connection
+     * @throws SshConnectionException No SSH2 connection
      */
-    public function __construct(SFTP $sftp, string $username, string $password)
+    public function __construct(SshInterface $ssh, string $username, string $password)
     {
         $this->username = $username;
         $this->password = $password;
+        $this->ssh = $ssh;
 
-        $sftp->login($username, $password);
-        $this->sftp = $sftp;
-        if (!$this->sftp->isConnected())
-            throw new SshConnectionException("No SFTP connection");
+        $this->ssh->login($username, $password);
+        if (!$this->ssh->isConnected())
+            throw new SshConnectionException("No SSH2 connection");
     }
 
     public function terminal(string $command, ?string $regex = null): bool
     {
-        $this->response = (string) $this->sftp->exec($command);
+        $this->response = (string) $this->ssh->exec($command);
         if (!$regex && $this->response == "")
             return true;
 
@@ -54,11 +49,11 @@ class Ssh implements SshInterface
 
     public function interactiveTerminal(string $command, ?string $regex = null): bool
     {
-        $this->sftp->read('/.*@.*[$|#]/', SFTP::READ_REGEX);
-        $this->sftp->write($command . "\n");
-        $this->sftp->setTimeout(3);
+        $this->ssh->read('/.*@.*[$|#]/', SFTP::READ_REGEX);
+        $this->ssh->write($command . "\n");
+        $this->ssh->setTimeout(3);
 
-        $this->response = (string) $this->sftp->read();
+        $this->response = (string) $this->ssh->read();
 
         if (preg_match('/(\[sudo\])/', $this->response)) {
             if (!$this->sudo())
@@ -76,8 +71,8 @@ class Ssh implements SshInterface
 
     private function sudo(): bool
     {
-        $this->sftp->write($this->getPassword()."\n");
-        $this->response = (string) $this->sftp->read('/.*@.*[$|#]/', SFTP::READ_REGEX);
+        $this->ssh->write($this->getPassword()."\n");
+        $this->response = (string) $this->ssh->read('/.*@.*[$|#]/', SFTP::READ_REGEX);
 
         if (preg_match('/(\[sudo\])/', $this->response)) {
             trigger_error("Wrong password for sudo", E_USER_WARNING);
@@ -102,8 +97,8 @@ class Ssh implements SshInterface
         return $this->response;
     }
 
-    public function getSftp(): SFTP
+    public function getSsh(): SshInterface
     {
-        return $this->sftp;
+        return $this->ssh;
     }
 }
