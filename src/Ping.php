@@ -41,7 +41,7 @@ class Ping implements ServerInfo
     public function __construct(string $host, int $port = 25565, bool $oldPre17 = false, int $timeout = 3, ?Object $ping = null)
     {
         if (!$ping instanceof AbstractPing) {
-            $ping = ($oldPre17)? new \DevLancer\MinecraftStatus\Ping($host, $port, $timeout) : new PingPreOld17($host, $port, $timeout);
+            $ping = ($oldPre17)?  new PingPreOld17($host, $port, $timeout) : new \DevLancer\MinecraftStatus\Ping($host, $port, $timeout);
         }
 
         $this->ping = $ping;
