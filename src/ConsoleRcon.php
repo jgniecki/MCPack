@@ -18,7 +18,11 @@ use Thedudeguy\Rcon;
  */
 class ConsoleRcon extends Rcon implements ConsoleInterface
 {
-    public function sendCommand(string $command): bool
+    /**
+     * @param string $command
+     * @return bool
+     */
+    public function sendCommand($command): bool
     {
         if (!$this->isConnected())
             $this->connect();
