@@ -11,6 +11,7 @@ namespace DevLancer\MCPack\Loader;
 
 use DevLancer\MCPack\Locator\RemoteFileLocator;
 use DevLancer\MCPack\Properties\ServerProperties;
+use InvalidArgumentException;
 use Symfony\Component\Config\Exception\FileLocatorFileNotFoundException;
 use Symfony\Component\Config\FileLocatorInterface;
 use Symfony\Component\Config\Loader\FileLoader;
@@ -30,11 +31,12 @@ class PropertiesLoader extends FileLoader
      * @param string $resource
      * @return ServerProperties[]
      * @throws FileLocatorFileNotFoundException
+     * @throws \Exception No content received
      */
     public function load($resource, ?string $type = null): array
     {
         if (!$this->supports($resource, $type)) {
-            //todo error
+            throw new InvalidArgumentException(sprintf('Argument 1 passed to DevLancer\MCPack\PropertiesLoader::load() must be an instance of string, %s given', get_debug_type($resource)));
         }
 
         if (is_string($locate = $this->locator->locate($resource))) {
@@ -49,6 +51,9 @@ class PropertiesLoader extends FileLoader
         return $result;
     }
 
+    /**
+     * @throws \Exception
+     */
     private function content(string $locate): string
     {
         if ($this->locator instanceof RemoteFileLocator) {
@@ -59,7 +64,7 @@ class PropertiesLoader extends FileLoader
         }
 
         if ($content === false) {
-            //todo error
+            throw new \Exception("No content received from $locate");
         }
 
         return $content;

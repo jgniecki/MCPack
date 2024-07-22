@@ -14,6 +14,7 @@ use DevLancer\MinecraftMotdParser\Generator\HtmlGenerator;
 use DevLancer\MinecraftMotdParser\Generator\TextGenerator;
 use DevLancer\MinecraftMotdParser\Parser\ArrayParser;
 use DevLancer\MinecraftMotdParser\Parser\TextParser;
+use DevLancer\MinecraftStatus\StatusInterface;
 
 /**
  * Class Motd
@@ -76,15 +77,23 @@ class Motd
     ];
     const INFO_QUERY = Query::class;
     const INFO_PING = Ping::class;
-    private ServerInfo $info;
+    private $info;
 
     /**
      * @var null|string|array
      */
     private $response;
 
-    public function __construct(ServerInfo $info)
+    /**
+     * @param StatusInterface|ServerInfo $info
+     */
+
+    public function __construct($info)
     {
+        if (!$info instanceof StatusInterface && !$info instanceof ServerInfo) {
+            throw new \TypeError(sprintf('Argument 1 passed to DevLancer\MCPack\Motd::__construct() must be an instance of ' . ServerInfo::class . ' or ' . StatusInterface::class . ', %s given', get_debug_type($info)));
+        }
+
         $this->info = $info;
     }
 
