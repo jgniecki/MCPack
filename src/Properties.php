@@ -62,6 +62,13 @@ class Properties
     {
         $property = preg_grep('/' . $name . '/', $this->properties);
         $key = key($property);
+
+        if ($value === true) {
+            $value = "true";
+        } else {
+            $value = "false";
+        }
+
         $this->properties[$key] = $name . "=" . $value;
         return $this;
     }
