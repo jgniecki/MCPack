@@ -16,7 +16,7 @@ namespace DevLancer\MCPack;
  */
 interface ConsoleInterface
 {
-    public function sendCommand(string $command): bool;
+    public function sendCommand($command): bool;
     public function getResponse(): ?string;
     public function isConnected(): bool;
 }
