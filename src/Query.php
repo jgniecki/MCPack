@@ -10,126 +10,98 @@
 namespace DevLancer\MCPack;
 
 
-use xPaw\MinecraftQueryException;
-use xPaw\MinecraftQuery;
+use DevLancer\MinecraftStatus\AbstractQuery;
+use DevLancer\MinecraftStatus\Exception\ConnectionException;
+use DevLancer\MinecraftStatus\Exception\NotConnectedException;
+use DevLancer\MinecraftStatus\Exception\ReceiveStatusException;
+use DevLancer\MinecraftStatus\PlayerListInterface;
 
 /**
  * Class Query
  * @package DevLancer\MCPack
+ * @deprecated since dev-lancer/mc-pack 2.2, use \DevLancer\MinecraftStatus\Query instead
  */
 class Query implements ServerInfo
 {
-    /**
-     * @var MinecraftQuery
-     */
-    private MinecraftQuery $query;
-
-    /**
-     * @var string
-     */
-    private string $host;
-
-    /**
-     * @var int
-     */
-    private int $port;
-
-    /**
-     * @var int
-     */
-    private int $timeout;
+    private AbstractQuery $query;
 
     /**
      * Query constructor.
      * @param string $host
      * @param int $port
      * @param int $timeout
-     * @param MinecraftQuery|null $query
+     * @param AbstractQuery|null $query
      */
-    public function __construct(string $host, int $port = 25565, int $timeout = 3, ?MinecraftQuery $query = null)
+    public function __construct(string $host, int $port = 25565, int $timeout = 3, ?Object $query = null)
     {
-        if (!$query)
-            $query = new MinecraftQuery();
+        if (!$query instanceof AbstractQuery) {
+            $query = new \DevLancer\MinecraftStatus\Query($host, $port, $timeout);
+        }
 
         $this->query = $query;
-        $this->host = $host;
-        $this->port = $port;
-        $this->timeout = $timeout;
     }
 
-    /**
-     * @inheritDoc
-     */
     public function connect(): bool
     {
         try {
-            $this->query->Connect($this->host, $this->port, $this->timeout);
-            $connected = true;
-        } catch (MinecraftQueryException $exception) {
-            $connected = false;
+            $this->query->connect();
+        } catch (ReceiveStatusException|ConnectionException $e) {
+            return false;
         }
 
-        return $connected;
+        return true;
     }
 
-    /**
-     * @inheritDoc
-     */
     public function isConnected(): bool
     {
-        return $this->connect();
+        return $this->query->isConnected();
     }
 
-    /**
-     * @inheritDoc
-     */
     public function getPlayers(): array
     {
-        if (!$this->isConnected())
+        if (!$this->query instanceof PlayerListInterface)
             return [];
 
-        return (array) $this->query->GetPlayers();
+        try {
+            return $this->query->getPlayers();
+        } catch (NotConnectedException $e) {
+            return [];
+        }
     }
 
-    /**
-     * @inheritDoc
-     */
     public function getInfo(): array
     {
-        if (!$this->isConnected())
+        try {
+            return $this->query->getInfo();
+        } catch (NotConnectedException $e) {
             return [];
-
-        return (array) $this->query->GetInfo();
+        }
     }
 
-    /**
-     * @inheritDoc
-     */
     public function getCountPlayers(): int
     {
-        return count($this->getPlayers());
+        try {
+            return $this->query->getCountPlayers();
+        } catch (NotConnectedException $e) {
+            return 0;
+        }
     }
 
-    /**
-     * @inheritDoc
-     */
     public function getMaxPlayers(): int
     {
-        if (!$this->isConnected())
+        try {
+            return $this->query->getMaxPlayers();
+        } catch (NotConnectedException $e) {
             return 0;
-
-        return (int) $this->getInfo()['MaxPlayers'];
+        }
     }
 
-    /**
-     * @param null $type
-     * @return string|null
-     */
     public function getMotd($type = null): ?string
     {
-        if (!$this->isConnected())
+        try {
+            return $this->query->getMotd();
+        } catch (NotConnectedException $e) {
             return null;
-
-        return (string) $this->getInfo()['HostName'];
+        }
     }
 }

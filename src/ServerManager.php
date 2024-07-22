@@ -13,6 +13,7 @@ namespace DevLancer\MCPack;
 /**
  * Class ServerManager
  * @package DevLancer\MCPack
+ * @deprecated since dev-lancer/mc-pack 2.2, use DevLancer\MCPack\Manager\ServerManager instead
  */
 class ServerManager extends AbstractServerManager
 {

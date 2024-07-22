@@ -10,52 +10,25 @@
 namespace DevLancer\MCPack;
 
 
-use xPaw\MinecraftPing;
-use xPaw\MinecraftPingException;
+use DevLancer\MinecraftStatus\AbstractPing;
+use DevLancer\MinecraftStatus\Exception\ConnectionException;
+use DevLancer\MinecraftStatus\Exception\NotConnectedException;
+use DevLancer\MinecraftStatus\Exception\ReceiveStatusException;
+use DevLancer\MinecraftStatus\FaviconInterface;
+use DevLancer\MinecraftStatus\PingPreOld17;
+use DevLancer\MinecraftStatus\PlayerListInterface;
 
 /**
  * Class Ping
  * @package DevLancer\MCPack
+ * @deprecated since dev-lancer/mc-pack 2.2, use \DevLancer\MinecraftStatus\Ping instead
  */
 class Ping implements ServerInfo
 {
-    /**
-     * @var MinecraftPing|null
-     */
-    private ?MinecraftPing $ping = null;
-
-    /**
-     *
-     */
+    private AbstractPing $ping;
     const MOTD_RAW = "text";
-    /**
-     *
-     */
     const MOTD_EXTRA = "extra";
-    /**
-     *
-     */
     const MOTD_SAMPLE = "sample";
-
-    /**
-     * @var string
-     */
-    private string $host;
-
-    /**
-     * @var int
-     */
-    private int $port;
-
-    /**
-     * @var int
-     */
-    private int $timeout;
-
-    /**
-     * @var bool
-     */
-    private bool $oldPre17;
 
     /**
      * Ping constructor.
@@ -63,103 +36,90 @@ class Ping implements ServerInfo
      * @param int $port
      * @param bool $oldPre17
      * @param int $timeout
-     * @param MinecraftPing|null $ping
+     * @param AbstractPing|null $ping
      */
-    public function __construct(string $host, int $port = 25565, bool $oldPre17 = false, int $timeout = 3, ?MinecraftPing $ping = null)
+    public function __construct(string $host, int $port = 25565, bool $oldPre17 = false, int $timeout = 3, ?Object $ping = null)
     {
-        if (!$ping)
-            $this->ping = $ping;
+        if (!$ping instanceof AbstractPing) {
+            $ping = ($oldPre17)? new \DevLancer\MinecraftStatus\Ping($host, $port, $timeout) : new PingPreOld17($host, $port, $timeout);
+        }
 
-        $this->host = $host;
-        $this->port = $port;
-        $this->oldPre17 = $oldPre17;
-        $this->timeout = $timeout;
+        $this->ping = $ping;
     }
 
-    /**
-     * @inheritDoc
-     */
     public function connect(): bool
     {
         try {
-            if (!$this->ping)
-                $this->create();
-
-            $this->ping->Connect();
-            $connected = true;
-        } catch (MinecraftPingException $exception) {
-            $connected = false;
+            $this->ping->connect();
+        } catch (ReceiveStatusException|ConnectionException $e) {
+            return false;
         }
 
-        return $connected;
-    }
-    
-    private function create(): void
-    {
-        $this->ping = new MinecraftPing($this->host, $this->port, $this->timeout);
+        return true;
     }
 
-    /**
-     * @inheritDoc
-     */
     public function isConnected(): bool
     {
-        return $this->connect();
+        return $this->ping->isConnected();
     }
 
-    /**
-     * @inheritDoc
-     */
     public function getPlayers(): array
     {
-        if (!$this->isConnected())
+        if (!$this->ping instanceof PlayerListInterface)
             return [];
 
-        return $this->getInfo()['players']['sample'] ?? [];
+        try {
+            return $this->ping->getPlayers();
+        } catch (NotConnectedException $e) {
+            return [];
+        }
     }
 
-    /**
-     * @inheritDoc
-     */
     public function getCountPlayers(): int
     {
-        if (!$this->isConnected())
+        try {
+            return $this->ping->getCountPlayers();
+        } catch (NotConnectedException $e) {
             return 0;
-
-        return $this->ping->Query()['players']['online'];
+        }
     }
 
-    /**
-     * @inheritDoc
-     */
     public function getMaxPlayers(): int
     {
-        if (!$this->isConnected())
+        try {
+            return $this->ping->getMaxPlayers();
+        } catch (NotConnectedException $e) {
             return 0;
-
-        return $this->ping->Query()['players']['max'];
+        }
     }
 
-    /**
-     * @inheritDoc
-     */
     public function getInfo(): array
     {
-        if (!$this->isConnected())
+        try {
+            return (array)$this->ping->getInfo();
+        } catch (NotConnectedException $e) {
             return [];
-
-        return (array) $this->ping->Query();
+        }
     }
 
-    /**
-     * @return string|null
-     * @throws MinecraftPingException
-     */
     public function getFavicon(): ?string
     {
-        if (!$this->isConnected())
+        if (!$this->ping instanceof FaviconInterface)
             return null;
 
-        return (string) $this->ping->Query()['favicon'];
+        try {
+            return $this->ping->getFavicon();
+        } catch (NotConnectedException $e) {
+            return null;
+        }
+    }
+
+    public function getMotd(): ?string
+    {
+        try {
+            return $this->ping->getMotd();
+        } catch (NotConnectedException $e) {
+            return null;
+        }
     }
 }

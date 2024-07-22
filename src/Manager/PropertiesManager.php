@@ -6,20 +6,16 @@
  * file that was distributed with this source code.
  */
 
-
-namespace DevLancer\MCPack;
-
+namespace DevLancer\MCPack\Manager;
 
 use DevLancer\MCPack\Exception\SshConnectionException;
 use DevLancer\MCPack\Loader\PropertiesLoader;
 use DevLancer\MCPack\Locator\RemoteFileLocator;
-use DevLancer\MCPack\Properties\PropertyNameTrait;
 use DevLancer\MCPack\Properties\ServerProperties;
 use DevLancer\MCPack\Serialization\PropertiesEncoder;
 use DevLancer\MCPack\Serialization\PropertiesNormalizer;
+use DevLancer\MCPack\Sftp\SftpInterface;
 use phpseclib\Net\SFTP;
-use ReflectionClass;
-use Symfony\Component\Config\Exception\FileLocatorFileNotFoundException;
 use Symfony\Component\Config\FileLocator;
 use Symfony\Component\Config\Loader\LoaderInterface;
 use Symfony\Component\Serializer\Encoder\JsonEncoder;
@@ -28,27 +24,19 @@ use Symfony\Component\Serializer\Normalizer\ObjectNormalizer;
 use Symfony\Component\Serializer\Serializer;
 use Symfony\Component\Serializer\SerializerInterface;
 
-/**
- * Class Properties
- * @package DevLancer\MCPack
- * @deprecated since dev-lancer/mc-pack 2.2, use DevLancer\MCPack\Manager\PropertiesManager instead
- */
-class Properties
+class PropertiesManager
 {
-    use PropertyNameTrait;
-
     private string $path;
-    private ?SFTP $sftp;
+    private ?SftpInterface $sftp;
     private LoaderInterface $loader;
     private SerializerInterface $serializer;
-    private ServerProperties $serverProperties;
+    private ?ServerProperties $serverProperties = null;
+    private int $filemtime = -1;
 
     /**
-     * @throws FileLocatorFileNotFoundException
-     * @throws SshConnectionException No SFTP connection
-     * @throws \Exception
+     * @throws SshConnectionException
      */
-    public function __construct(?SFTP $sftp, string $path, ?LoaderInterface $loader = null, ?SerializerInterface $serializer = null)
+    public function __construct(string $path, ?SftpInterface $sftp = null, ?LoaderInterface $loader = null, ?SerializerInterface $serializer = null)
     {
         if ($sftp && !$sftp->isConnected())
             throw new SshConnectionException("No SFTP connection");
@@ -74,49 +62,31 @@ class Properties
     }
 
     /**
-     * @param string $name
-     * @param string|int|bool|float $value
-     * @return self
+     * @throws \Exception
      */
-    public function setProperty(string $name, $value): self
+    public function getProperties(): ServerProperties
     {
-        $class = new ReflectionClass(ServerProperties::class);
-        $property = $this->getPropertyBySerializedName($class, $name);
-        if (!$property)
-            return $this;
+        /**
+         * @var SFTP $sftp;
+         */
+        $sftp = $this->sftp;
 
-        $property->setAccessible(true);
-        $property->setValue($this->serverProperties, $value);
+        if (!$this->serverProperties) {
+            $this->serverProperties = $this->loader->load($this->path)[0];
+            $this->filemtime = ($this->loader->getLocator() instanceof RemoteFileLocator)? $sftp->filemtime($this->path) : filemtime($this->path);
+            return $this->serverProperties;
+        }
 
-        return $this;
+        $filemtime = ($this->loader->getLocator() instanceof RemoteFileLocator)? $this->sftp->filemtime($this->path) : filemtime($this->path);
+        if ($filemtime !== $this->filemtime) {
+            $this->serverProperties = null;
+            return $this->getProperties();
+        }
+
+        return $this->serverProperties;
     }
 
-    public function hasProperty(string $name):bool
-    {
-        $class = new ReflectionClass(ServerProperties::class);
-        $property = $this->getPropertyBySerializedName($class, $name);
-        return (bool) $property;
-    }
-
-    public function getProperty(string $name)
-    {
-        $class = new ReflectionClass(ServerProperties::class);
-        $property = $this->getPropertyBySerializedName($class, $name);
-        if (!$property)
-            return null;
-
-        $property->setAccessible(true);
-
-
-        return $property->getValue($this->serverProperties);
-    }
-
-    public function getProperties():array
-    {
-        return $this->serverProperties->toArray();
-    }
-
-    public function save(): bool
+    public function saveProperties(ServerProperties $properties): bool
     {
         $properties = $this->serializer->serialize($this->serverProperties, ServerProperties::class);
 
@@ -125,4 +95,5 @@ class Properties
 
         return (file_put_contents($this->path, $properties) !== false);
     }
+
 }

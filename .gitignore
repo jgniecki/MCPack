@@ -3,3 +3,5 @@ composer.lock
 .idea
 test.php
 cache.log
+/docker/
+/docker-compose.yml

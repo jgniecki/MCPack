@@ -18,11 +18,7 @@ use Thedudeguy\Rcon;
  */
 class ConsoleRcon extends Rcon implements ConsoleInterface
 {
-    /**
-     * @param string $command
-     * @return bool
-     */
-    public function sendCommand($command): bool
+    public function sendCommand(string $command): bool
     {
         if (!$this->isConnected())
             $this->connect();
@@ -30,9 +26,6 @@ class ConsoleRcon extends Rcon implements ConsoleInterface
         return (bool) parent::sendCommand($command);
     }
 
-    /**
-     * @return string|null
-     */
     public function getResponse(): ?string
     {
         if ($this->isConnected())
@@ -41,9 +34,6 @@ class ConsoleRcon extends Rcon implements ConsoleInterface
         return null;
     }
 
-    /**
-     * @return bool
-     */
     public function isConnected(): bool
     {
         return parent::isConnected();
