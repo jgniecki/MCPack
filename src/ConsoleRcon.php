@@ -10,7 +10,7 @@
 namespace DevLancer\MCPack;
 
 
-use Thedudeguy\Rcon;
+use DevLancer\MinecraftRcon\Rcon;
 
 /**
  * Class ConsoleRcon
@@ -18,28 +18,12 @@ use Thedudeguy\Rcon;
  */
 class ConsoleRcon extends Rcon implements ConsoleInterface
 {
-    /**
-     * @param string $command
-     * @return bool
-     */
-    public function sendCommand($command): bool
+    public function sendCommand(string $command): bool
     {
-        if (!$this->isConnected())
-            $this->connect();
+        if (!$this->isConnected() && !$this->connect()) {
+            return false;
+        }
 
-        return (bool) parent::sendCommand($command);
-    }
-
-    public function getResponse(): ?string
-    {
-        if ($this->isConnected())
-            return parent::getResponse();
-
-        return null;
-    }
-
-    public function isConnected(): bool
-    {
-        return parent::isConnected();
+        return parent::sendCommand($command) !== false;
     }
 }
