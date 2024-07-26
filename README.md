@@ -43,7 +43,9 @@ It enables downloading basic server information and sending commands.
     $console->sendCommand("bc MCPack");
 ```
 
-Look [here](https://github.com/jgniecki/MinecraftStatus)
+Look [here](https://github.com/jgniecki/MinecraftStatus) for Query
+
+Look [here](https://github.com/jgniecki/MinecraftRcon) for RCON
 
 ### ServerManager with SSH
 
